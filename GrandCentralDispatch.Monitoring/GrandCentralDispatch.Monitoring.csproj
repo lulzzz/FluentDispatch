@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.1.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Tools\grafana-6.2.1.zip" />
+    <None Remove="Tools\influxdb-1.7.6-1.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Tools\grafana-6.2.1.zip" />
+    <EmbeddedResource Include="Tools\influxdb-1.7.6-1.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="App.Metrics" Version="3.1.0" />
+    <PackageReference Include="App.Metrics.AspNetCore" Version="3.1.0" />
+    <PackageReference Include="App.Metrics.AspNetCore.Hosting" Version="3.1.0" />
+    <PackageReference Include="App.Metrics.AspNetCore.Mvc" Version="3.1.0" />
+    <PackageReference Include="App.Metrics.AspNetCore.Tracking" Version="3.1.0" />
+    <PackageReference Include="App.Metrics.Formatters.Json" Version="3.1.0" />
+    <PackageReference Include="App.Metrics.Reporting.InfluxDB" Version="3.1.0" />
+    <PackageReference Include="ConcurrentHashSet" Version="1.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="SharpZipLib" Version="1.2.0" />
+    <PackageReference Include="System.Reactive" Version="4.1.6" />
+  </ItemGroup>
+</Project>
