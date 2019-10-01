@@ -768,6 +768,7 @@ namespace GrandCentralDispatch.Nodes.Dual
             {
                 try
                 {
+                    if (_nodeHub == null) return;
                     await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
                     NodeMetrics.Alive = true;
                     _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());

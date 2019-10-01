@@ -35,6 +35,7 @@ namespace GrandCentralDispatch.Options
         /// <param name="aggressivelyGcCollect">Force GC collection and compacting LOH regularly to prevent memory exhaustion when the cluster deals with many incoming items.</param>
         /// <param name="executeRemotely">Execute calls using RPC to remote clients</param>
         /// <param name="hosts">Remote hosts</param>
+        /// <param name="enablePerformanceCounters">Enable Windows Performance Counters</param>
         public ClusterOptions(int clusterSize = 10,
             bool persistenceEnabled = false,
             int maxItemsInPersistentCache = 1_000_000,
@@ -47,7 +48,8 @@ namespace GrandCentralDispatch.Options
             ClusterProcessingType clusterProcessingType = ClusterProcessingType.Parallel,
             bool aggressivelyGcCollect = false,
             bool executeRemotely = false,
-            ISet<Host> hosts = null)
+            ISet<Host> hosts = null,
+            bool enablePerformanceCounters = false)
         {
             ClusterSize = clusterSize;
             PersistenceEnabled = persistenceEnabled;
@@ -62,6 +64,7 @@ namespace GrandCentralDispatch.Options
             AggressivelyGcCollect = aggressivelyGcCollect;
             ExecuteRemotely = executeRemotely;
             Hosts = hosts;
+            EnablePerformanceCounters = enablePerformanceCounters;
         }
 
         /// <summary>
@@ -152,6 +155,11 @@ namespace GrandCentralDispatch.Options
         /// Definition of remote hosts, key is machine name or IP and value is port.
         /// </summary>
         public ISet<Host> Hosts { get; set; } = new HashSet<Host>();
+
+        /// <summary>
+        /// Execute Windows Performance Counters
+        /// </summary>
+        public bool EnablePerformanceCounters { get; set; } = false;
     }
 
     /// <summary>

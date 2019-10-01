@@ -17,6 +17,7 @@ using GrandCentralDispatch.Helpers;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Monitoring;
 using GrandCentralDispatch.Options;
+using System.Runtime.InteropServices;
 
 namespace GrandCentralDispatch.Clusters
 {
@@ -95,12 +96,20 @@ namespace GrandCentralDispatch.Clusters
             ClusterOptions = clusterOptions;
             Progress = progress ?? new Progress<double>();
             CancellationTokenSource = cts ?? new CancellationTokenSource();
-            _performanceCounters = Helper.GetPerformanceCounters();
-            PersistentCache = new CachingService(new PersistentCacheProvider(
-                SQLiteDatabase.Connection.GetAwaiter().GetResult(),
-                new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
-                    {SizeLimit = ClusterOptions.MaxItemsInPersistentCache}))),
-                loggerFactory));
+            _performanceCounters = Helper.GetPerformanceCounters(clusterOptions.EnablePerformanceCounters);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                PersistentCache = new CachingService(new PersistentCacheProvider(
+                    SQLiteDatabase.Connection.GetAwaiter().GetResult(),
+                    new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
+                    { SizeLimit = ClusterOptions.MaxItemsInPersistentCache }))),
+                    loggerFactory));
+            }
+            else
+            {
+                PersistentCache = new CachingService(new DummyCacheProvider());
+            }
+
             ClusterMetrics = new ClusterMetrics();
             var interval = new Subject<Unit>();
             var scheduler = Scheduler.Default;

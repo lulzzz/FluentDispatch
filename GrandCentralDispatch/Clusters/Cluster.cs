@@ -184,9 +184,18 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                const string message = "Could not dispatch item, nodes are full.";
-                Logger.LogWarning(message);
-                throw new GrandCentralDispatchException(message);
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                    throw new GrandCentralDispatchException(message);
+                }
             }
         }
 
@@ -448,7 +457,17 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                Logger.LogWarning("Could not dispatch item, nodes are full.");
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                }
             }
         }
 
@@ -505,7 +524,17 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                Logger.LogWarning("Could not dispatch item, nodes are full.");
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                }
             }
         }
 
@@ -915,7 +944,17 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                Logger.LogWarning("Could not dispatch item, nodes are full.");
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                }
             }
         }
 
@@ -987,7 +1026,17 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                Logger.LogWarning("Could not dispatch item, nodes are full.");
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                }
             }
         }
 
@@ -1059,7 +1108,17 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                Logger.LogWarning("Could not dispatch item, nodes are full.");
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                }
             }
         }
 
@@ -1131,7 +1190,17 @@ namespace GrandCentralDispatch.Clusters
             }
             else
             {
-                Logger.LogWarning("Could not dispatch item, nodes are full.");
+                if (_nodes.All(node => !node.NodeMetrics.Alive))
+                {
+                    const string message = "Could not dispatch item, nodes are offline.";
+                    Logger.LogError(message);
+                    throw new GrandCentralDispatchException(message);
+                }
+                else
+                {
+                    const string message = "Could not dispatch item, nodes are full.";
+                    Logger.LogWarning(message);
+                }
             }
         }
 

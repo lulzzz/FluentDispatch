@@ -373,6 +373,7 @@ namespace GrandCentralDispatch.Nodes.Unary
             {
                 try
                 {
+                    if (_nodeHub == null) return;
                     await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
                     NodeMetrics.Alive = true;
                     _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());

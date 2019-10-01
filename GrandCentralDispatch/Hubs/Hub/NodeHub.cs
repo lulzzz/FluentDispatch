@@ -22,7 +22,7 @@ namespace GrandCentralDispatch.Hubs.Hub
         {
             _logger = logger.CreateLogger<NodeHub>();
             _cluster = new ConcurrentDictionary<Guid, IGroup>();
-            _performanceCounters = Helper.GetPerformanceCounters();
+            _performanceCounters = Helper.GetPerformanceCounters(true);
         }
 
         public async Task HeartBeatAsync(Guid nodeGuid)
