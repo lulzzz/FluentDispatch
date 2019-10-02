@@ -49,13 +49,11 @@ namespace GrandCentralDispatch.Cache
                     }
                 });
 
-                using (var command = new SqliteCommand("INSERT INTO CacheItem (key, blob) VALUES(@key, @blob)",
-                    _dbConnection))
-                {
-                    command.Parameters.Add(new SqliteParameter("key", key));
-                    command.Parameters.Add(new SqliteParameter("blob", await Serialize(item)));
-                    await command.ExecuteNonQueryAsync(CancellationToken.None);
-                }
+                var command = new SqliteCommand("INSERT INTO CacheItem (key, blob) VALUES(@key, @blob)",
+                    _dbConnection);
+                command.Parameters.Add(new SqliteParameter("key", key));
+                command.Parameters.Add(new SqliteParameter("blob", await Serialize(item)));
+                await command.ExecuteNonQueryAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -83,13 +81,11 @@ namespace GrandCentralDispatch.Cache
                     }
                 });
 
-                using (var command = new SqliteCommand("INSERT INTO CacheItem1 (key, blob) VALUES(@key, @blob)",
-                    _dbConnection))
-                {
-                    command.Parameters.Add(new SqliteParameter("key", key));
-                    command.Parameters.Add(new SqliteParameter("blob", await Serialize(item)));
-                    await command.ExecuteNonQueryAsync(CancellationToken.None);
-                }
+                var command = new SqliteCommand("INSERT INTO CacheItem1 (key, blob) VALUES(@key, @blob)",
+                    _dbConnection);
+                command.Parameters.Add(new SqliteParameter("key", key));
+                command.Parameters.Add(new SqliteParameter("blob", await Serialize(item)));
+                await command.ExecuteNonQueryAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -117,13 +113,11 @@ namespace GrandCentralDispatch.Cache
                     }
                 });
 
-                using (var command = new SqliteCommand("INSERT INTO CacheItem2 (key, blob) VALUES(@key, @blob)",
-                    _dbConnection))
-                {
-                    command.Parameters.Add(new SqliteParameter("key", key));
-                    command.Parameters.Add(new SqliteParameter("blob", await Serialize(item)));
-                    await command.ExecuteNonQueryAsync(CancellationToken.None);
-                }
+                var command = new SqliteCommand("INSERT INTO CacheItem2 (key, blob) VALUES(@key, @blob)",
+                    _dbConnection);
+                command.Parameters.Add(new SqliteParameter("key", key));
+                command.Parameters.Add(new SqliteParameter("blob", await Serialize(item)));
+                await command.ExecuteNonQueryAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -136,16 +130,14 @@ namespace GrandCentralDispatch.Cache
             var items = new List<TOutput>();
             try
             {
-                using (var command = new SqliteCommand("SELECT blob FROM CacheItem",
-                    _dbConnection))
+                var command = new SqliteCommand("SELECT blob FROM CacheItem",
+                    _dbConnection);
+                var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+                while (reader.Read())
                 {
-                    var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
-                    while (await reader.ReadAsync())
-                    {
-                        var buffer = GetBytes(reader, 0);
-                        var item = await Deserialize<TOutput>(buffer);
-                        items.Add(item);
-                    }
+                    var buffer = GetBytes(reader, 0);
+                    var item = await Deserialize<TOutput>(buffer);
+                    items.Add(item);
                 }
             }
             catch (Exception ex)
@@ -161,17 +153,15 @@ namespace GrandCentralDispatch.Cache
             var items = new List<(string key, TOutput1 item1)>();
             try
             {
-                using (var command = new SqliteCommand("SELECT key, blob FROM CacheItem1",
-                    _dbConnection))
+                var command = new SqliteCommand("SELECT key, blob FROM CacheItem1",
+                    _dbConnection);
+                var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+                while (reader.Read())
                 {
-                    var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
-                    while (await reader.ReadAsync())
-                    {
-                        var key = reader.GetString(0);
-                        var buffer = GetBytes(reader, 1);
-                        var item = await Deserialize<TOutput1>(buffer);
-                        items.Add((key, item));
-                    }
+                    var key = reader.GetString(0);
+                    var buffer = GetBytes(reader, 1);
+                    var item = await Deserialize<TOutput1>(buffer);
+                    items.Add((key, item));
                 }
             }
             catch (Exception ex)
@@ -187,17 +177,15 @@ namespace GrandCentralDispatch.Cache
             var items = new List<(string key, TOutput2 item2)>();
             try
             {
-                using (var command = new SqliteCommand("SELECT key, blob FROM CacheItem2",
-                    _dbConnection))
+                var command = new SqliteCommand("SELECT key, blob FROM CacheItem2",
+                    _dbConnection);
+                var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+                while (reader.Read())
                 {
-                    var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
-                    while (await reader.ReadAsync())
-                    {
-                        var key = reader.GetString(0);
-                        var buffer = GetBytes(reader, 1);
-                        var item = await Deserialize<TOutput2>(buffer);
-                        items.Add((key, item));
-                    }
+                    var key = reader.GetString(0);
+                    var buffer = GetBytes(reader, 1);
+                    var item = await Deserialize<TOutput2>(buffer);
+                    items.Add((key, item));
                 }
             }
             catch (Exception ex)
@@ -213,11 +201,9 @@ namespace GrandCentralDispatch.Cache
             try
             {
                 const string query = @"DELETE FROM CacheItem;DELETE FROM CacheItem1;DELETE FROM CacheItem2;vacuum;";
-                using (var command = new SqliteCommand(query,
-                    _dbConnection))
-                {
-                    await command.ExecuteNonQueryAsync();
-                }
+                var command = new SqliteCommand(query,
+                    _dbConnection);
+                await command.ExecuteNonQueryAsync();
             }
             catch (Exception ex)
             {
@@ -230,12 +216,10 @@ namespace GrandCentralDispatch.Cache
             try
             {
                 _logger.LogDebug($"Eviction of key {key}: {reason} from persistent storage.");
-                using (var command = new SqliteCommand("DELETE FROM CacheItem WHERE key = @key",
-                    _dbConnection))
-                {
-                    command.Parameters.Add(new SqliteParameter("key", key));
-                    command.ExecuteNonQuery();
-                }
+                var command = new SqliteCommand("DELETE FROM CacheItem WHERE key = @key",
+                    _dbConnection);
+                command.Parameters.Add(new SqliteParameter("key", key));
+                command.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -249,12 +233,10 @@ namespace GrandCentralDispatch.Cache
             try
             {
                 _logger.LogDebug($"Eviction of key {key}: {reason} from persistent storage.");
-                using (var command = new SqliteCommand("DELETE FROM CacheItem1 WHERE key = @key",
-                    _dbConnection))
-                {
-                    command.Parameters.Add(new SqliteParameter("key", key));
-                    command.ExecuteNonQuery();
-                }
+                var command = new SqliteCommand("DELETE FROM CacheItem1 WHERE key = @key",
+                    _dbConnection);
+                command.Parameters.Add(new SqliteParameter("key", key));
+                command.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -268,12 +250,10 @@ namespace GrandCentralDispatch.Cache
             try
             {
                 _logger.LogDebug($"Eviction of key {key}: {reason} from persistent storage.");
-                using (var command = new SqliteCommand("DELETE FROM CacheItem2 WHERE key = @key",
-                    _dbConnection))
-                {
-                    command.Parameters.Add(new SqliteParameter("key", key));
-                    command.ExecuteNonQuery();
-                }
+                var command = new SqliteCommand("DELETE FROM CacheItem2 WHERE key = @key",
+                    _dbConnection);
+                command.Parameters.Add(new SqliteParameter("key", key));
+                command.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
