@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using GrandCentralDispatch.Sample.Remote.Contract.Services;
 using Grpc.Core;
 using MagicOnion.Hosting;
 using MagicOnion.Server;
@@ -47,7 +46,7 @@ namespace GrandCentralDispatch.Sample.Remote.Node
             return MagicOnionHost.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddSingleton<IRestClient, RestClient>();
+                    services.AddHttpClient();
                     services.AddSingleton<ILogger>(logger);
                     services.AddLogging(b => { b.AddSerilog(logger); });
                 })

@@ -1,5 +1,4 @@
-﻿
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Sample.Remote.Contract.Models;

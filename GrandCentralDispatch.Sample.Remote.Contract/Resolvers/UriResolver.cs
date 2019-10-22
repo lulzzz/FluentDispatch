@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
-using GrandCentralDispatch.Sample.Remote.Contract.Services;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Resolvers;
 
@@ -13,11 +13,11 @@ namespace GrandCentralDispatch.Sample.Remote.Contract.Resolvers
     public sealed class UriResolver : Item2RemotePartialResolver<Uri, string>
     {
         private readonly ILogger _logger;
-        private readonly IRestClient _restClient;
+        private readonly HttpClient _httpClient;
 
-        public UriResolver(ILoggerFactory loggerFactory, IRestClient restClient)
+        public UriResolver(ILoggerFactory loggerFactory, IHttpClientFactory httpClientFactory)
         {
-            _restClient = restClient;
+            _httpClient = httpClientFactory.CreateClient();
             _logger = loggerFactory.CreateLogger<UriResolver>();
         }
 
@@ -33,7 +33,7 @@ namespace GrandCentralDispatch.Sample.Remote.Contract.Resolvers
             _logger.LogInformation(
                 $"New URI {item.AbsoluteUri} received, trying to download content from node {nodeMetrics.Id}...");
             var response =
-                await _restClient.GetAsync(item, CancellationToken.None);
+                await _httpClient.GetAsync(item, CancellationToken.None);
             return await response.Content.ReadAsStringAsync();
         }
     }

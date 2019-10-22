@@ -17,9 +17,9 @@ namespace GrandCentralDispatch.Sample.Web.Resolvers
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
 
-        public IpResolver(IHttpClientFactory httpClient, ILoggerFactory loggerFactory)
+        public IpResolver(IHttpClientFactory httpClientFactory, ILoggerFactory loggerFactory)
         {
-            _httpClient = httpClient.CreateClient();
+            _httpClient = httpClientFactory.CreateClient();
             _logger = loggerFactory.CreateLogger<IpResolver>();
         }
 

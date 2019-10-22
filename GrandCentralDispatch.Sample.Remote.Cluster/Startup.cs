@@ -1,19 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using GrandCentralDispatch.Clusters;
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Sample.Remote.Contract.Models;
 using GrandCentralDispatch.Sample.Remote.Contract.Resolvers;
-using GrandCentralDispatch.Sample.Remote.Contract.Services;
 using GrandCentralDispatch.Extensions;
 using GrandCentralDispatch.Metrics;
-using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Monitoring.Extensions;
 using GrandCentralDispatch.Options;
 using Microsoft.AspNetCore.Hosting;
@@ -49,7 +45,7 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
             // Set-up the cluster
             services.AddRemoteCluster<Payload, Uri, string, string>(
                 sp => new PayloadResolver(sp.GetService<ILoggerFactory>()),
-                sp => new UriResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IRestClient>()),
+                sp => new UriResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IHttpClientFactory>()),
                 sp => new RequestResolver(sp.GetService<ILoggerFactory>()));
 
             services.AddControllers().AddMonitoringMetrics();
@@ -69,10 +65,7 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
             app.UseMonitoring(app.ApplicationServices.GetServices<IExposeMetrics>());
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }
