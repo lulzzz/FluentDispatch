@@ -66,10 +66,7 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
                 app.UseHsts();
             }
 
-            app.UseMonitoring(new List<IExposeMetrics>
-            {
-                app.ApplicationServices.GetService<ICluster<Payload, Uri>>()
-            });
+            app.UseMonitoring(app.ApplicationServices.GetServices<IExposeMetrics>());
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseEndpoints(endpoints =>

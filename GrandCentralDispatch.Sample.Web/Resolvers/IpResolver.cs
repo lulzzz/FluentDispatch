@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Resolvers;
-using GrandCentralDispatch.Sample.Web.Helpers;
 using GrandCentralDispatch.Sample.Web.Models;
 
 namespace GrandCentralDispatch.Sample.Web.Resolvers
@@ -15,11 +15,11 @@ namespace GrandCentralDispatch.Sample.Web.Resolvers
     internal sealed class IpResolver : PartialResolver<IPAddress, Geolocation>
     {
         private readonly ILogger _logger;
-        private readonly IRestClient _restClient;
+        private readonly HttpClient _httpClient;
 
-        public IpResolver(IRestClient restClient, ILoggerFactory loggerFactory)
+        public IpResolver(IHttpClientFactory httpClient, ILoggerFactory loggerFactory)
         {
-            _restClient = restClient;
+            _httpClient = httpClient.CreateClient();
             _logger = loggerFactory.CreateLogger<IpResolver>();
         }
 
@@ -36,7 +36,7 @@ namespace GrandCentralDispatch.Sample.Web.Resolvers
         {
             _logger.LogInformation(
                 $"New IP {item} received, trying to resolve geolocation from node {nodeMetrics.Id}...");
-            var response = await _restClient.GetAsync(new Uri($"http://ip-api.com/json/{item}"),
+            var response = await _httpClient.GetAsync(new Uri($"http://ip-api.com/json/{item}"),
                 cancellationToken);
             var geolocation = JsonConvert.DeserializeObject<Geolocation>(await response.Content.ReadAsStringAsync());
             return geolocation;

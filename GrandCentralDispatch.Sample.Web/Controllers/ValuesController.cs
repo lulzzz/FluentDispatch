@@ -28,11 +28,12 @@ namespace GrandCentralDispatch.Sample.Web.Controllers
             var requestIdentifier = Guid.NewGuid();
 
             // We dispatch the func to be executed on a dedicated thread, the Linq expression will not be computed on this thread
-            _requestCluster.Dispatch(requestIdentifier, () => Request.Cookies.Select(cookie =>
+            var headers = Request.Headers.ToList();
+            _requestCluster.Dispatch(requestIdentifier, () => headers.Select(header =>
             {
-                cookie.Deconstruct(out var key, out var value);
+                header.Deconstruct(out var key, out var value);
                 return $"{key}:{value}";
-            }).Aggregate((cookie1, cookie2) => string.Join(';', cookie1, cookie2)));
+            }).Aggregate((header1, header2) => string.Join(';', header1, header2)));
 
             // We post directly the value because there is nothing to compute here
             _requestCluster.Dispatch(requestIdentifier, Request.HttpContext.Connection.RemoteIpAddress);

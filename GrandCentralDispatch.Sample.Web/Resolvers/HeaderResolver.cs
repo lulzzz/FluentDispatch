@@ -8,33 +8,33 @@ using GrandCentralDispatch.Resolvers;
 
 namespace GrandCentralDispatch.Sample.Web.Resolvers
 {
-    internal sealed class CookieResolver : PartialResolver<string, string>
+    internal sealed class HeaderResolver : PartialResolver<string, string>
     {
         private readonly IMemoryCache _cache;
         private readonly ILogger _logger;
 
-        public CookieResolver(IMemoryCache cache,
+        public HeaderResolver(IMemoryCache cache,
             ILoggerFactory loggerFactory)
         {
             _cache = cache;
-            _logger = loggerFactory.CreateLogger<CookieResolver>();
+            _logger = loggerFactory.CreateLogger<HeaderResolver>();
         }
 
         /// <summary>
-        /// Process each new cookies
+        /// Process each new header
         /// </summary>
-        /// <param name="cookie">Cookie</param>
+        /// <param name="header">Header</param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
-        protected override Task<string> Process(string cookie,
+        protected override Task<string> Process(string header,
             NodeMetrics nodeMetrics,
             CancellationToken cancellationToken)
         {
             _logger.LogInformation(
-                $"New cookies received, inserting to memory cache identified by request identifier from node {nodeMetrics.Id}...");
-            _cache.Set(Guid.NewGuid(), cookie);
-            return Task.FromResult(cookie);
+                $"New headers received, inserting to memory cache identified by request identifier from node {nodeMetrics.Id}...");
+            _cache.Set(Guid.NewGuid(), header);
+            return Task.FromResult(header);
         }
     }
 }

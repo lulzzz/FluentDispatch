@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using GrandCentralDispatch.Clusters;
+using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Options;
 using GrandCentralDispatch.Resolvers;
 
@@ -35,6 +36,7 @@ namespace GrandCentralDispatch.Extensions
         public static void AddAsyncCluster<TInput, TOutput>(this IServiceCollection services)
         {
             services.TryAddSingleton<IAsyncCluster<TInput, TOutput>, AsyncCluster<TInput, TOutput>>();
+            services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<IAsyncCluster<TInput, TOutput>>());
         }
 
         /// <summary>
@@ -48,10 +50,11 @@ namespace GrandCentralDispatch.Extensions
         {
             services.TryAddSingleton(resolver);
             services.TryAddSingleton<ICluster<TInput>, Cluster<TInput>>();
+            services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<ICluster<TInput>>());
         }
 
         /// <summary>
-        /// Add <see cref="ICluster{TInput1}"/> to <see cref="IServiceCollection"/>
+        /// Add <see cref="ICluster{TInput1,TInput2}"/> to <see cref="IServiceCollection"/>
         /// </summary>
         /// <typeparam name="TInput1"></typeparam>
         /// <typeparam name="TInput2"></typeparam>
@@ -71,10 +74,11 @@ namespace GrandCentralDispatch.Extensions
             services.TryAddSingleton(item2Resolver);
             services.TryAddSingleton(finalResolver);
             services.TryAddSingleton<ICluster<TInput1, TInput2>, Cluster<TInput1, TInput2, TOutput1, TOutput2>>();
+            services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<ICluster<TInput1, TInput2>>());
         }
 
         /// <summary>
-        /// Add <see cref="ICluster{TInput1}"/> to <see cref="IServiceCollection"/>
+        /// Add <see cref="ICluster{TInput1,TInput2}"/> to <see cref="IServiceCollection"/>
         /// </summary>
         /// <typeparam name="TInput1"></typeparam>
         /// <typeparam name="TInput2"></typeparam>
@@ -94,6 +98,7 @@ namespace GrandCentralDispatch.Extensions
             services.TryAddSingleton(item2Resolver);
             services.TryAddSingleton(finalResolver);
             services.TryAddSingleton<ICluster<TInput1, TInput2>, Cluster<TInput1, TInput2, TOutput1, TOutput2>>();
+            services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<ICluster<TInput1, TInput2>>());
         }
     }
 }

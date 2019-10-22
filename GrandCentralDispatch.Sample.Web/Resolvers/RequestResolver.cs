@@ -20,17 +20,17 @@ namespace GrandCentralDispatch.Sample.Web.Resolvers
         /// Process the result of both resolvers
         /// </summary>
         /// <param name="location"><see cref="Geolocation"/></param>
-        /// <param name="cookie">Cookie value</param>
+        /// <param name="header">Header value</param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
         protected override async Task Process(Geolocation location,
-            string cookie,
+            string header,
             NodeMetrics nodeMetrics,
             CancellationToken cancellationToken)
         {
             _logger.LogInformation(
-                $"Cookies {cookie} associated to location (lat: {location.Lat};lon: {location.Lon})");
+                $"Header {header} associated to location (lat: {location.Lat};lon: {location.Lon})");
             await Task.CompletedTask;
         }
     }

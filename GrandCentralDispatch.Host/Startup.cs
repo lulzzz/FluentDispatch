@@ -1,10 +1,12 @@
-﻿using GrandCentralDispatch.Metrics;
+﻿using System.Collections.Generic;
+using GrandCentralDispatch.Clusters;
+using GrandCentralDispatch.Metrics;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using GrandCentralDispatch.Monitoring.Extensions;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GrandCentralDispatch.Host
 {
@@ -20,10 +22,10 @@ namespace GrandCentralDispatch.Host
         public virtual void ConfigureServices(IServiceCollection services)
         {
             services.AddMonitoringService();
-            services.AddMvc().AddMonitoringMetrics().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddControllers().AddMonitoringMetrics();
         }
 
-        public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -36,7 +38,11 @@ namespace GrandCentralDispatch.Host
 
             app.UseMonitoring(app.ApplicationServices.GetServices<IExposeMetrics>());
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }
