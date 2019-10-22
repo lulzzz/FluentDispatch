@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using App.Metrics;
 using App.Metrics.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -15,7 +16,7 @@ namespace GrandCentralDispatch.Monitoring.Extensions
                     bld.Configuration.Configure(
                         options =>
                         {
-                            options.Enabled = true;
+                            options.Enabled = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
                             options.ReportingEnabled = true;
                         });
                     bld.Report.ToInfluxDb(options =>
