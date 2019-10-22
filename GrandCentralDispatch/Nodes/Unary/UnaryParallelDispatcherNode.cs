@@ -363,6 +363,7 @@ namespace GrandCentralDispatch.Nodes.Unary
         /// </summary>
         private async Task ComputeStatistics()
         {
+            if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
             NodeMetrics.CurrentThroughput = _previouslyProcessedItems + _previouslyExecutorProcessedItems;

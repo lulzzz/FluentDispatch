@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using GrandCentralDispatch.Clusters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +16,7 @@ using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Monitoring.Extensions;
 using GrandCentralDispatch.Options;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GrandCentralDispatch.Sample.Remote.Cluster
 {
@@ -34,7 +37,7 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
                     clusterOptions.ExecuteRemotely = true;
                     var hosts = Configuration.GetSection("Nodes")
                         .GetChildren()
-                        .Select(x => new Host(x.GetValue<string>("Address"),
+                        .Select(x => new Models.Host(x.GetValue<string>("Address"),
                             x.GetValue<int>("Port")))
                         .ToHashSet();
                     clusterOptions.Hosts = hosts;
@@ -49,10 +52,10 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
                 sp => new UriResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IRestClient>()),
                 sp => new RequestResolver(sp.GetService<ILoggerFactory>()));
 
-            services.AddMvc().AddMonitoringMetrics().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddControllers().AddMonitoringMetrics();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -63,9 +66,16 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
                 app.UseHsts();
             }
 
-            app.UseMonitoring(app.ApplicationServices.GetServices<IExposeMetrics>());
+            app.UseMonitoring(new List<IExposeMetrics>
+            {
+                app.ApplicationServices.GetService<ICluster<Payload, Uri>>()
+            });
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

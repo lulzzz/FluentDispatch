@@ -1,63 +1,66 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
+using System.Net;
+using System.Threading.Tasks;
+using GrandCentralDispatch.Sample.Remote.Contract.Services;
+using Grpc.Core;
+using MagicOnion.Hosting;
+using MagicOnion.Server;
 using Serilog;
-using GrandCentralDispatch.Sample.Remote.Node.Services;
-using Topshelf;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace GrandCentralDispatch.Sample.Remote.Node
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            var rc = HostFactory.Run(x =>
-            {
-                var basePath = $@"{Directory.GetParent(Assembly.GetAssembly(typeof(Program)).FullName).FullName}\logs";
-                if (!Directory.Exists(basePath))
-                {
-                    Directory.CreateDirectory(basePath);
-                }
+            await CreateWebHostBuilder(args).Build().RunAsync();
+        }
 
-                x.Service<ICoreService>(c =>
-                {
-                    c.ConstructUsing(settings => new CoreService());
+        private static IHostBuilder CreateWebHostBuilder(string[] args)
+        {
+            var configurationBuilder = new ConfigurationBuilder();
+            configurationBuilder.SetBasePath(Directory.GetCurrentDirectory());
+            configurationBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            configurationBuilder.AddEnvironmentVariables();
+            var configuration = configurationBuilder.Build();
 
-                    c.WhenStarted((s, host) =>
-                    {
-                        s.Start();
-                        return true;
-                    });
-
-                    c.WhenStopped((s, host) =>
-                    {
-                        s.Stop();
-                        return true;
-                    });
-                });
-
-                x.SetServiceName("GrandCentralDispatch.Sample.Remote.Node");
-                x.SetDisplayName("GrandCentralDispatch.Sample.Remote.Node");
-                x.SetDescription("GCD node which receives the method calls from the cluster.");
-                x.StartAutomatically();
-                x.EnableServiceRecovery(serviceRecovery =>
-                {
-                    serviceRecovery.OnCrashOnly();
-                    serviceRecovery.RestartService(0);
-                });
-                x.UseSerilog(new LoggerConfiguration()
-                        .MinimumLevel.Information()
-                        .Enrich.FromLogContext()
+            var logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .Enrich.FromLogContext()
 #if DEBUG
-                        .WriteTo.Console()
+                .WriteTo.Console()
 #else
-                        .WriteTo.File($@"{basePath}\log_service_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                .WriteTo.File($@"{basePath}\log_node_.txt", rollingInterval: RollingInterval.Day, shared: true)
 #endif
-                );
-            });
-
-            var exitCode = (int) Convert.ChangeType(rc, rc.GetTypeCode());
-            Environment.ExitCode = exitCode;
+                .CreateLogger();
+            return MagicOnionHost.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddSingleton<IRestClient, RestClient>();
+                    services.AddSingleton<ILogger>(logger);
+                    services.AddLogging(b => { b.AddSerilog(logger); });
+                })
+                .UseMagicOnion(
+                    new List<ServerPort>
+                    {
+                        new ServerPort(IPAddress.Any.ToString(),
+                            configuration.GetValue<int>("NodeListeningPort"), ServerCredentials.Insecure)
+                    },
+                    new MagicOnionOptions(true)
+                    {
+                        MagicOnionLogger = new MagicOnionLogToGrpcLogger()
+                    },
+                    types: new[]
+                    {
+                        typeof(Contract.Resolvers.PayloadResolver),
+                        typeof(Contract.Resolvers.UriResolver),
+                        typeof(Contract.Resolvers.RequestResolver),
+                        typeof(Hubs.Hub.NodeHub)
+                    });
         }
     }
 }

@@ -178,6 +178,7 @@ namespace GrandCentralDispatch.Nodes.Async
         /// </summary>
         private void ComputeStatistics()
         {
+            if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
             NodeMetrics.CurrentThroughput = _previouslyProcessedItems;
