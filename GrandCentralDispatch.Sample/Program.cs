@@ -28,7 +28,7 @@ namespace GrandCentralDispatch.Sample
                 new Resolver(() => _cluster, messageCount, nodeCount),
                 // Feel free to update values here, decreasing cluster size will increase processing time, ...
                 new OptionsWrapper<ClusterOptions>(new ClusterOptions(clusterSize: nodeCount,
-                    persistenceEnabled: true,
+                    persistenceEnabled: false,
                     maxItemsInPersistentCache: 1_000_000,
                     limitCpuUsage: 100,
                     nodeQueuingStrategy: NodeQueuingStrategy.Randomized,
