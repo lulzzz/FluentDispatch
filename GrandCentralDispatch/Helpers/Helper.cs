@@ -48,7 +48,7 @@ namespace GrandCentralDispatch.Helpers
 
         public static string GetVersion()
         {
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetExecutingAssembly();
             var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
             return fvi.FileVersion;
         }
@@ -65,7 +65,7 @@ namespace GrandCentralDispatch.Helpers
         private static byte[] ReadFully(Stream input)
         {
             var buffer = new byte[16 * 1024];
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
                 int read;
                 while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
