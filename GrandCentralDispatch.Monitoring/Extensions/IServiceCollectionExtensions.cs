@@ -4,7 +4,7 @@ using GrandCentralDispatch.Metrics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using GrandCentralDispatch.Monitoring.Services.Background;
+using GrandCentralDispatch.Monitoring.Services;
 
 namespace GrandCentralDispatch.Monitoring.Extensions
 {

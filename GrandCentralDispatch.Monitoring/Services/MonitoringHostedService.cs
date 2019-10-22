@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.SharpZipLib.Core;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using GrandCentralDispatch.Monitoring.Helpers;
 
-namespace GrandCentralDispatch.Monitoring.Services.Background
+namespace GrandCentralDispatch.Monitoring.Services
 {
     public class MonitoringHostedService : IHostedService
     {
@@ -23,10 +24,16 @@ namespace GrandCentralDispatch.Monitoring.Services.Background
             _logger = loggerFactory == null
                 ? NullLogger<MonitoringHostedService>.Instance
                 : loggerFactory.CreateLogger<MonitoringHostedService>();
-            ExtractMonitoringTools();
-            _influxDbProcess = RunInfluxDb();
-            _grafanaProcess = RunGrafana();
-            Task.Delay(2500).Wait();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                ExtractMonitoringTools();
+                _influxDbProcess = RunInfluxDb();
+                _grafanaProcess = RunGrafana();
+            }
+            else
+            {
+                _logger.LogWarning("Running on non-Windows system, monitoring is disabled.");
+            }
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
