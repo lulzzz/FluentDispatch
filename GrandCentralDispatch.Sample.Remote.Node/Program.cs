@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Sample.Remote.Contract.Services;
 using Grpc.Core;
@@ -27,6 +28,12 @@ namespace GrandCentralDispatch.Sample.Remote.Node
             configurationBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
             configurationBuilder.AddEnvironmentVariables();
             var configuration = configurationBuilder.Build();
+            var basePath =
+                $@"{Directory.GetParent(Assembly.GetAssembly(typeof(Program)).FullName).FullName}\logs";
+            if (!Directory.Exists(basePath))
+            {
+                Directory.CreateDirectory(basePath);
+            }
 
             var logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
