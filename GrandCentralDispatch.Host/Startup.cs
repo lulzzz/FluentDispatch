@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using GrandCentralDispatch.Metrics;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +34,7 @@ namespace GrandCentralDispatch.Host
                 app.UseHsts();
             }
 
-            app.UseMonitoring();
+            app.UseMonitoring(app.ApplicationServices.GetServices<IExposeMetrics>());
             app.UseHttpsRedirection();
             app.UseMvc();
         }

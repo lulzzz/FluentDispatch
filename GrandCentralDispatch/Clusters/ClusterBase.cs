@@ -15,9 +15,9 @@ using GrandCentralDispatch.Cache;
 using GrandCentralDispatch.Database;
 using GrandCentralDispatch.Helpers;
 using GrandCentralDispatch.Models;
-using GrandCentralDispatch.Monitoring;
 using GrandCentralDispatch.Options;
 using System.Runtime.InteropServices;
+using GrandCentralDispatch.Events;
 
 namespace GrandCentralDispatch.Clusters
 {
@@ -102,7 +102,7 @@ namespace GrandCentralDispatch.Clusters
                 PersistentCache = new CachingService(new PersistentCacheProvider(
                     SQLiteDatabase.Connection.GetAwaiter().GetResult(),
                     new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
-                    { SizeLimit = ClusterOptions.MaxItemsInPersistentCache }))),
+                        {SizeLimit = ClusterOptions.MaxItemsInPersistentCache}))),
                     loggerFactory));
             }
             else
@@ -152,6 +152,16 @@ Setting cluster circuit breaker options...
         }
 
         /// <summary>
+        /// Event raised when a node metric is submitted
+        /// </summary>
+        public EventHandler<NodeMetricsEventArgs> NodeMetricSubmitted { get; set; }
+
+        /// <summary>
+        /// Event raised when a cluster metric is submitted
+        /// </summary>
+        public EventHandler<ClusterMetricsEventArgs> ClusterMetricSubmitted { get; set; }
+
+        /// <summary>
         /// Stop the processing for the cluster.
         /// </summary>
         public void Stop()
@@ -178,23 +188,10 @@ Setting cluster circuit breaker options...
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
         protected void ComputeNodeHealth(NodeMetrics nodeMetrics)
         {
-            MonitoringEngine.SetNodePerformanceCounters(nodeMetrics.Id,
-                nodeMetrics.RemoteNodeHealth.MachineName,
-                nodeMetrics.RemoteNodeHealth.PerformanceCounters);
-            MonitoringEngine.SetNodeThroughput(nodeMetrics.Id,
-                nodeMetrics.RemoteNodeHealth.MachineName,
-                nodeMetrics.CurrentThroughput);
-            MonitoringEngine.SetNodeItemsProcessed(nodeMetrics.Id,
-                nodeMetrics.RemoteNodeHealth.MachineName,
-                nodeMetrics.TotalItemsProcessed);
-            MonitoringEngine.SetNodeBufferSize(nodeMetrics.Id,
-                nodeMetrics.RemoteNodeHealth.MachineName,
-                nodeMetrics.BufferSize);
-            MonitoringEngine.SetNodeItemEvicted(nodeMetrics.Id,
-                nodeMetrics.RemoteNodeHealth.MachineName,
-                nodeMetrics.ItemsEvicted);
+            var nodeMetricSubmitted = NodeMetricSubmitted;
+            nodeMetricSubmitted?.Invoke(this, new NodeMetricsEventArgs(nodeMetrics));
         }
-
+        
         /// <summary>
         /// Compute cluster health
         /// </summary>
@@ -212,13 +209,14 @@ Setting cluster circuit breaker options...
             }
 
             ClusterMetrics.Health = clusterHealth;
-            MonitoringEngine.SetClusterThroughput(ClusterMetrics.CurrentThroughput);
-            MonitoringEngine.SetClusterPerformanceCounters(ClusterMetrics.Health.PerformanceCounters);
             if (ClusterOptions.AggressivelyGcCollect)
             {
                 GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
                 GC.Collect();
             }
+
+            var clusterMetricSubmitted = ClusterMetricSubmitted;
+            clusterMetricSubmitted?.Invoke(this, new ClusterMetricsEventArgs(ClusterMetrics));
         }
 
         /// <summary>

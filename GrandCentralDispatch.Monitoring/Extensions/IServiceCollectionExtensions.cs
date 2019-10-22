@@ -1,4 +1,6 @@
-﻿using App.Metrics;
+﻿using System.Collections.Generic;
+using App.Metrics;
+using GrandCentralDispatch.Metrics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,10 +28,12 @@ namespace GrandCentralDispatch.Monitoring.Extensions
             return builder;
         }
 
-        public static IApplicationBuilder UseMonitoring(this IApplicationBuilder builder)
+        public static IApplicationBuilder UseMonitoring(this IApplicationBuilder builder,
+            IEnumerable<IExposeMetrics> exposedMetrics)
         {
             var metrics = builder.ApplicationServices.GetService<IMetricsRoot>();
-            MonitoringEngine.Metrics = metrics;
+            var monitoringEngine = new MonitoringEngine(metrics, exposedMetrics as IReadOnlyCollection<IExposeMetrics>);
+            monitoringEngine.RegisterEngine();
             return builder;
         }
     }

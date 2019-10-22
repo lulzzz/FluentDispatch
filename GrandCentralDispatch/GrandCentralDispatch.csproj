@@ -29,8 +29,4 @@
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.10.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\GrandCentralDispatch.Monitoring\GrandCentralDispatch.Monitoring.csproj" />
-  </ItemGroup>
-
 </Project>

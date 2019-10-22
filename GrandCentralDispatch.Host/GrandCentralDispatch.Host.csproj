@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GrandCentralDispatch.Monitoring\GrandCentralDispatch.Monitoring.csproj" />
     <ProjectReference Include="..\GrandCentralDispatch\GrandCentralDispatch.csproj" />
   </ItemGroup>
 

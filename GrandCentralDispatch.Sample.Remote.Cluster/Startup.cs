@@ -10,6 +10,7 @@ using GrandCentralDispatch.Sample.Remote.Contract.Models;
 using GrandCentralDispatch.Sample.Remote.Contract.Resolvers;
 using GrandCentralDispatch.Sample.Remote.Contract.Services;
 using GrandCentralDispatch.Extensions;
+using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Monitoring.Extensions;
 using GrandCentralDispatch.Options;
@@ -62,7 +63,7 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
                 app.UseHsts();
             }
 
-            app.UseMonitoring();
+            app.UseMonitoring(app.ApplicationServices.GetServices<IExposeMetrics>());
             app.UseHttpsRedirection();
             app.UseMvc();
         }

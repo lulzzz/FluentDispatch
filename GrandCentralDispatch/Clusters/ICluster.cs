@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Models;
 
 namespace GrandCentralDispatch.Clusters
@@ -9,7 +10,7 @@ namespace GrandCentralDispatch.Clusters
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    public interface IAsyncCluster<TInput, TOutput> : IDisposable
+    public interface IAsyncCluster<TInput, TOutput> : IExposeMetrics, IDisposable
     {
         /// <summary>
         /// Dispatch an item to the cluster and wait for the result
@@ -40,7 +41,7 @@ namespace GrandCentralDispatch.Clusters
     /// The cluster which is in charge of distributing the load to the configured nodes.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
-    public interface ICluster<in TInput> : IDisposable
+    public interface ICluster<in TInput> : IExposeMetrics, IDisposable
     {
         /// <summary>
         /// Dispatch an item to the cluster, to be processed by the configured nodes.
@@ -83,7 +84,7 @@ namespace GrandCentralDispatch.Clusters
     /// </summary>
     /// <typeparam name="TInput1"></typeparam>
     /// <typeparam name="TInput2"></typeparam>
-    public interface ICluster<in TInput1, in TInput2> : IDisposable
+    public interface ICluster<in TInput1, in TInput2> : IExposeMetrics, IDisposable
     {
         /// <summary>
         /// Dispatch an item to the cluster, to be processed by the configured nodes.
