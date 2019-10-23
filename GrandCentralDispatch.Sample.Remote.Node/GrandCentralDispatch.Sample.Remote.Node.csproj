@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>GrandCentralDispatch.Sample.Remote.Node</AssemblyName>
     <RootNamespace>GrandCentralDispatch.Sample.Remote.Node</RootNamespace>
@@ -10,8 +9,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\packages\grpc.core\2.23.0\runtimes\win\native\grpc_csharp_ext.x64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>grpc_csharp_ext.x64.dll</Link>
+    </Content>
+    <Content Include="..\packages\grpc.core\2.23.0\runtimes\linux\native\libgrpc_csharp_ext.x64.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>libgrpc_csharp_ext.x64.so</Link>
+    </Content>
+    <Content Include="..\packages\grpc.core\2.23.0\runtimes\osx\native\libgrpc_csharp_ext.x64.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>libgrpc_csharp_ext.x64.dylib</Link>
     </Content>
   </ItemGroup>
 
