@@ -25,7 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Monitoring", "GrandCentralDispatch.Monitoring\GrandCentralDispatch.Monitoring.csproj", "{E41F6E7A-16FF-4756-85FD-53E28896E809}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrandCentralDispatch.Host", "GrandCentralDispatch.Host\GrandCentralDispatch.Host.csproj", "{30EE5722-DD07-468F-AB6D-E5CEC7D05D81}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Host", "GrandCentralDispatch.Host\GrandCentralDispatch.Host.csproj", "{30EE5722-DD07-468F-AB6D-E5CEC7D05D81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrandCentralDispatch.PerformanceCounters", "GrandCentralDispatch.PerformanceCounters\GrandCentralDispatch.PerformanceCounters.csproj", "{ECA9166A-29AD-4039-9578-FC421A0C395F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,6 +75,10 @@ Global
 		{30EE5722-DD07-468F-AB6D-E5CEC7D05D81}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30EE5722-DD07-468F-AB6D-E5CEC7D05D81}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30EE5722-DD07-468F-AB6D-E5CEC7D05D81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECA9166A-29AD-4039-9578-FC421A0C395F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECA9166A-29AD-4039-9578-FC421A0C395F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECA9166A-29AD-4039-9578-FC421A0C395F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECA9166A-29AD-4039-9578-FC421A0C395F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

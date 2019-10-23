@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Concurrency;
@@ -17,7 +16,9 @@ using GrandCentralDispatch.Helpers;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Options;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using GrandCentralDispatch.Events;
+using GrandCentralDispatch.PerformanceCounters;
 
 namespace GrandCentralDispatch.Clusters
 {
@@ -32,11 +33,6 @@ namespace GrandCentralDispatch.Clusters
         /// Subscription
         /// </summary>
         private readonly IDisposable _computeClusterHealthSubscription;
-
-        /// <summary>
-        /// <see cref="ICollection{TInput}"/>
-        /// </summary>
-        private readonly ICollection<PerformanceCounter> _performanceCounters;
 
         /// <summary>
         /// <see cref="ILogger"/>
@@ -57,6 +53,16 @@ namespace GrandCentralDispatch.Clusters
             var random = new Random(seed);
             return random;
         });
+
+        /// <summary>
+        /// Monitor performance counters
+        /// </summary>
+        private readonly CounterMonitor _counterMonitor = new CounterMonitor();
+
+        /// <summary>
+        /// Performance counters
+        /// </summary>
+        private readonly IDictionary<string, double> _performanceCounters = new Dictionary<string, double>();
 
         /// <summary>
         /// Node bulk progress
@@ -96,7 +102,6 @@ namespace GrandCentralDispatch.Clusters
             ClusterOptions = clusterOptions;
             Progress = progress ?? new Progress<double>();
             CancellationTokenSource = cts ?? new CancellationTokenSource();
-            _performanceCounters = Helper.GetPerformanceCounters(clusterOptions.EnablePerformanceCounters);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 PersistentCache = new CachingService(new PersistentCacheProvider(
@@ -118,6 +123,35 @@ namespace GrandCentralDispatch.Clusters
                 .ObserveOn(scheduler).Subscribe(e => ComputeClusterHealth());
 
             interval.OnNext(Unit.Default);
+            _counterMonitor.CounterUpdate += OnCounterUpdate;
+            var monitorTask = new Task(() =>
+            {
+                try
+                {
+                    _counterMonitor.Start();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error while listening to counters: {ex.Message}");
+                }
+            });
+            monitorTask.Start();
+        }
+
+        /// <summary>
+        /// Update performance counters
+        /// </summary>
+        /// <param name="args"><see cref="CounterEventArgs"/></param>
+        private void OnCounterUpdate(CounterEventArgs args)
+        {
+            if (!_performanceCounters.ContainsKey(args.DisplayName))
+            {
+                _performanceCounters.Add(args.DisplayName, args.Value);
+            }
+            else
+            {
+                _performanceCounters[args.DisplayName] = args.Value;
+            }
         }
 
         /// <summary>
@@ -191,7 +225,7 @@ Setting cluster circuit breaker options...
             var nodeMetricSubmitted = NodeMetricSubmitted;
             nodeMetricSubmitted?.Invoke(this, new NodeMetricsEventArgs(nodeMetrics));
         }
-        
+
         /// <summary>
         /// Compute cluster health
         /// </summary>
@@ -200,11 +234,11 @@ Setting cluster circuit breaker options...
             var clusterHealth = new ClusterHealth();
             foreach (var performanceCounter in _performanceCounters)
             {
-                if (!clusterHealth.PerformanceCounters.ContainsKey(performanceCounter.CounterName) &&
-                    !clusterHealth.PerformanceCounters.TryAdd(performanceCounter.CounterName,
-                        performanceCounter.NextValue()))
+                if (!clusterHealth.PerformanceCounters.ContainsKey(performanceCounter.Key) &&
+                    !clusterHealth.PerformanceCounters.TryAdd(performanceCounter.Key,
+                        Convert.ToInt64(performanceCounter.Value)))
                 {
-                    Logger.LogWarning($"Could not add performance counter {performanceCounter.CounterName}.");
+                    Logger.LogWarning($"Could not add performance counter {performanceCounter.Key}.");
                 }
             }
 
@@ -247,6 +281,7 @@ Setting cluster circuit breaker options...
 
             if (disposing)
             {
+                _counterMonitor.Stop();
                 _computeClusterHealthSubscription?.Dispose();
                 CancellationTokenSource?.Cancel(true);
             }
