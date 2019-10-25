@@ -18,14 +18,17 @@ namespace GrandCentralDispatch.Monitoring.Extensions
                             options.Enabled = enabled;
                             options.ReportingEnabled = true;
                         });
-                    bld.Report.ToInfluxDb(options =>
+                    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("INFLUXDB")))
                     {
-                        options.InfluxDb.BaseUri = new Uri(Environment.GetEnvironmentVariable("INFLUXDB"));
-                        options.InfluxDb.Database = "grandcentraldispatchdb";
-                        options.FlushInterval = TimeSpan.FromSeconds(5);
-                        options.InfluxDb.CreateDataBaseIfNotExists = true;
-                        options.HttpPolicy.Timeout = TimeSpan.FromSeconds(10);
-                    });
+                        bld.Report.ToInfluxDb(options =>
+                        {
+                            options.InfluxDb.BaseUri = new Uri(Environment.GetEnvironmentVariable("INFLUXDB"));
+                            options.InfluxDb.Database = "grandcentraldispatchdb";
+                            options.FlushInterval = TimeSpan.FromSeconds(5);
+                            options.InfluxDb.CreateDataBaseIfNotExists = true;
+                            options.HttpPolicy.Timeout = TimeSpan.FromSeconds(10);
+                        });
+                    }
                 });
 
             builder.UseMetricsWebTracking();

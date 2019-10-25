@@ -1,6 +1,7 @@
-version: "1"
+version: "3"
 services:
   cluster:
+    container_name: gcdcluster
     environment:
       INFLUXDB: "http://192.168.2.10:8086"
       GCD_CLUSTER_LISTENING_PORT: 5432
@@ -8,6 +9,7 @@ services:
     build:
       context: ../
       dockerfile: GrandCentralDispatch.Cluster/Dockerfile
+    image: gcd/cluster:v1
     ports:
       - "5432:5432"
     networks:
