@@ -1,0 +1,15 @@
+version: "2"
+services:
+  node:
+    environment:
+      GCD_NODE_LISTENING_PORT: 9090
+    build:
+      context: ../
+      dockerfile: GrandCentralDispatch.Sample.Remote.Node/Dockerfile
+    ports:
+      - "9090:9090"
+    networks:
+      - gcd
+networks:
+  gcd:
+    external: true

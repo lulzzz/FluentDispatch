@@ -1,0 +1,46 @@
+version: "2"
+services:
+  cluster:
+    environment:
+      INFLUXDB: "http://192.168.2.10:8086"
+      GCD_CLUSTER_LISTENING_PORT: 5432
+      GCD_CLUSTER_NODES: "[{'MachineName':'192.168.2.10','Port':9090}]"
+    build:
+      context: ../
+      dockerfile: GrandCentralDispatch.Sample.Remote.Cluster/Dockerfile
+    ports:
+      - "5432:5432"
+    networks:
+      - gcd
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_DISABLE_LOGIN_FORM="true"
+      - GF_AUTH_ANONYMOUS_ENABLED="true"
+      - GF_AUTH_ANONYMOUS_ORG_ROLE="Admin"
+    volumes:
+      - grafana-volume:/var/lib/grafana
+    networks:
+      - gcd
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-volume:/var/lib/influxdb
+    networks:
+      - gcd
+volumes:
+  grafana-volume:
+    external: true
+  influxdb-volume:
+    external: true
+networks:
+  gcd:
+    external: true

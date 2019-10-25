@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using App.Metrics;
 using App.Metrics.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -8,7 +7,7 @@ namespace GrandCentralDispatch.Monitoring.Extensions
 {
     public static class IWebHostBuilderExtensions
     {
-        public static IWebHostBuilder UseMonitoring(this IWebHostBuilder builder)
+        public static IWebHostBuilder UseMonitoring(this IWebHostBuilder builder, bool enabled)
         {
             builder
                 .ConfigureMetricsWithDefaults(bld =>
@@ -16,12 +15,12 @@ namespace GrandCentralDispatch.Monitoring.Extensions
                     bld.Configuration.Configure(
                         options =>
                         {
-                            options.Enabled = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                            options.Enabled = enabled;
                             options.ReportingEnabled = true;
                         });
                     bld.Report.ToInfluxDb(options =>
                     {
-                        options.InfluxDb.BaseUri = new Uri("http://127.0.0.1:8086");
+                        options.InfluxDb.BaseUri = new Uri(Environment.GetEnvironmentVariable("INFLUXDB"));
                         options.InfluxDb.Database = "grandcentraldispatchdb";
                         options.FlushInterval = TimeSpan.FromSeconds(5);
                         options.InfluxDb.CreateDataBaseIfNotExists = true;

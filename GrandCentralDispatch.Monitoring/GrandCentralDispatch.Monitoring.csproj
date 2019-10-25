@@ -6,16 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Tools\grafana-6.2.1.zip" />
-    <None Remove="Tools\influxdb-1.7.6-1.zip" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Tools\grafana-6.2.1.zip" />
-    <EmbeddedResource Include="Tools\influxdb-1.7.6-1.zip" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="App.Metrics" Version="3.2.0-dev0022" />
     <PackageReference Include="App.Metrics.AspNetCore" Version="3.2.0-dev0022" />
     <PackageReference Include="App.Metrics.AspNetCore.Hosting" Version="3.2.0-dev0022" />

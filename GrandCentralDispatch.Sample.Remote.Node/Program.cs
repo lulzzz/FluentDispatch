@@ -54,7 +54,7 @@ namespace GrandCentralDispatch.Sample.Remote.Node
                     new List<ServerPort>
                     {
                         new ServerPort(IPAddress.Any.ToString(),
-                            configuration.GetValue<int>("NodeListeningPort"), ServerCredentials.Insecure)
+                            configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"), ServerCredentials.Insecure)
                     },
                     new MagicOnionOptions(true)
                     {

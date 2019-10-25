@@ -1,15 +1,13 @@
-#Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
-#For more information, please see https://aka.ms/containercompat
-
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.0-nanoserver-1903 AS base
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.0-buster-slim AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 5432
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.0-nanoserver-1903 AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.0-buster AS build
 WORKDIR /src
 COPY ["GrandCentralDispatch.Sample.Remote.Cluster/GrandCentralDispatch.Sample.Remote.Cluster.csproj", "GrandCentralDispatch.Sample.Remote.Cluster/"]
 COPY ["GrandCentralDispatch.Sample.Remote.Contract/GrandCentralDispatch.Sample.Remote.Contract.csproj", "GrandCentralDispatch.Sample.Remote.Contract/"]
 COPY ["GrandCentralDispatch/GrandCentralDispatch.csproj", "GrandCentralDispatch/"]
+COPY ["GrandCentralDispatch.PerformanceCounters/GrandCentralDispatch.PerformanceCounters.csproj", "GrandCentralDispatch.PerformanceCounters/"]
 COPY ["GrandCentralDispatch.Monitoring/GrandCentralDispatch.Monitoring.csproj", "GrandCentralDispatch.Monitoring/"]
 RUN dotnet restore "GrandCentralDispatch.Sample.Remote.Cluster/GrandCentralDispatch.Sample.Remote.Cluster.csproj" -s https://www.myget.org/F/appmetrics -s https://api.nuget.org/v3/index.json
 COPY . .

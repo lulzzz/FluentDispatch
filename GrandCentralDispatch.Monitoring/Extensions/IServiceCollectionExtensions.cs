@@ -4,7 +4,6 @@ using GrandCentralDispatch.Metrics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using GrandCentralDispatch.Monitoring.Services;
 
 namespace GrandCentralDispatch.Monitoring.Extensions
 {
@@ -15,7 +14,6 @@ namespace GrandCentralDispatch.Monitoring.Extensions
     {
         public static IServiceCollection AddMonitoringService(this IServiceCollection services)
         {
-            services.AddHostedService<MonitoringHostedService>();
             services.AddMetricsReportingHostedService();
             services.AddMetricsTrackingMiddleware();
             services.AddMetricsEndpoints();

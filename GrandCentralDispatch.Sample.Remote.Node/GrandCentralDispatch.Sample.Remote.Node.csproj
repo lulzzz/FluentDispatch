@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>GrandCentralDispatch.Sample.Remote.Node</AssemblyName>
     <RootNamespace>GrandCentralDispatch.Sample.Remote.Node</RootNamespace>
-    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\packages\grpc.core\2.23.0\runtimes\win\native\grpc_csharp_ext.x64.dll">

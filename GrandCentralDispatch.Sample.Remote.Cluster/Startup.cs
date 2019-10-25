@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
@@ -13,6 +14,8 @@ using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Monitoring.Extensions;
 using GrandCentralDispatch.Options;
 using Microsoft.AspNetCore.Hosting;
+using Newtonsoft.Json;
+using Host = GrandCentralDispatch.Models.Host;
 
 namespace GrandCentralDispatch.Sample.Remote.Cluster
 {
@@ -30,13 +33,23 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
             services.AddMonitoringService();
             services.ConfigureCluster(clusterOptions =>
                 {
+                    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_CLUSTER_NODES")))
+                    {
+                        var hosts = JsonConvert.DeserializeObject<List<Host>>(
+                            Environment.GetEnvironmentVariable("GCD_CLUSTER_NODES"));
+                        clusterOptions.Hosts = hosts.ToHashSet();
+                    }
+                    else
+                    {
+                        var hosts = Configuration.GetSection("GCD_CLUSTER_NODES")
+                            .GetChildren()
+                            .Select(x => new Models.Host(x.GetValue<string>("MachineName"),
+                                x.GetValue<int>("Port")))
+                            .ToHashSet();
+                        clusterOptions.Hosts = hosts;
+                    }
+
                     clusterOptions.ExecuteRemotely = true;
-                    var hosts = Configuration.GetSection("Nodes")
-                        .GetChildren()
-                        .Select(x => new Models.Host(x.GetValue<string>("Address"),
-                            x.GetValue<int>("Port")))
-                        .ToHashSet();
-                    clusterOptions.Hosts = hosts;
                     clusterOptions.NodeQueuingStrategy = NodeQueuingStrategy.Healthiest;
                     clusterOptions.PersistenceEnabled = true;
                 },

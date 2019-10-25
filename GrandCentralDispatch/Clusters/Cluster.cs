@@ -165,13 +165,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     return await node.DispatchAsync(selector, item);
@@ -438,13 +438,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     node.Dispatch(item);
@@ -505,13 +505,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     node.Dispatch(itemProducer);
@@ -922,13 +922,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
@@ -1004,13 +1004,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
@@ -1086,13 +1086,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
@@ -1168,13 +1168,13 @@ namespace GrandCentralDispatch.Clusters
                 {
                     var node = availableNodes.Aggregate((node1, node2) =>
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Any(counter => counter.Key == "% Processor Time") &&
+                            .Any(counter => counter.Key == "CPU Usage") &&
                         node1.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value <=
+                            .Single(counter => counter.Key == "CPU Usage").Value <=
                         node2.NodeMetrics.RemoteNodeHealth.PerformanceCounters
-                            .Single(counter => counter.Key == "% Processor Time").Value
+                            .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
                     _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);

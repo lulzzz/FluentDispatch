@@ -16,8 +16,8 @@ namespace GrandCentralDispatch.Host.Hosting
         /// Initializes a new instance of the <see cref="IWebHostBuilder"/> class with pre-configured defaults.
         /// </summary>
         /// <returns>The initialized <see cref="IWebHostBuilder"/>.</returns>
-        public static IWebHostBuilder CreateDefaultBuilder(bool useSimpleConsoleLogger = true, int port = 8888) =>
-            CreateDefaultBuilder(useSimpleConsoleLogger, LogLevel.Debug, port);
+        public static IWebHostBuilder CreateDefaultBuilder(bool useSimpleConsoleLogger = true, int port = 8888, bool enableMonitoring = false) =>
+            CreateDefaultBuilder(useSimpleConsoleLogger, LogLevel.Debug, port, enableMonitoring);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IWebHostBuilder"/> class with pre-configured defaults.
@@ -25,9 +25,10 @@ namespace GrandCentralDispatch.Host.Hosting
         /// <param name="useSimpleConsoleLogger"></param>
         /// <param name="minSimpleConsoleLoggerLogLevel"></param>
         /// <param name="port"></param>
+        /// <param name="enableMonitoring">Enable Grafana monitoring (required InfluxDb running locally)</param>
         /// <returns>The initialized <see cref="IHostBuilder"/>.</returns>
         public static IWebHostBuilder CreateDefaultBuilder(bool useSimpleConsoleLogger,
-            LogLevel minSimpleConsoleLoggerLogLevel, int port)
+            LogLevel minSimpleConsoleLoggerLogLevel, int port, bool enableMonitoring)
         {
             var builder = new WebHostBuilder();
 
@@ -36,7 +37,7 @@ namespace GrandCentralDispatch.Host.Hosting
             ConfigureLoggingDefault(builder, useSimpleConsoleLogger, minSimpleConsoleLoggerLogLevel);
 
             return builder.UseKestrel((hostingContext, options) => { options.Listen(IPAddress.Loopback, port); })
-                .UseStartup<TStartup>().UseMonitoring();
+                .UseStartup<TStartup>().UseMonitoring(enableMonitoring);
         }
 
         private static void ConfigureHostConfigurationDefault(IWebHostBuilder builder)

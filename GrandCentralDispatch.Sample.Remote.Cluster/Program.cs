@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -54,10 +55,15 @@ namespace GrandCentralDispatch.Sample.Remote.Cluster
 
                     webBuilder.UseKestrel((hostingContext, options) =>
                     {
-                        options.Listen(IPAddress.Loopback,
-                            hostingContext.Configuration.GetValue<int>("ApiListeningPort"));
+                        options.Listen(IPAddress.Any,
+                            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_CLUSTER_LISTENING_PORT"))
+                                ? (int.TryParse(Environment.GetEnvironmentVariable("GCD_CLUSTER_LISTENING_PORT"),
+                                    out var port)
+                                    ? port
+                                    : hostingContext.Configuration.GetValue<int>("GCD_CLUSTER_LISTENING_PORT"))
+                                : hostingContext.Configuration.GetValue<int>("GCD_CLUSTER_LISTENING_PORT"));
                     });
-                    webBuilder.UseMonitoring();
+                    webBuilder.UseMonitoring(true);
                     webBuilder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Information()
                             .Enrich.FromLogContext()
