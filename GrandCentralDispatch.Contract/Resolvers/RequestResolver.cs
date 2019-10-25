@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Resolvers;
 
-namespace GrandCentralDispatch.Sample.Remote.Contract.Resolvers
+namespace GrandCentralDispatch.Contract.Resolvers
 {
     public sealed class RequestResolver : DualFuncRemoteResolver<string, string>
     {

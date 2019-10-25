@@ -7,8 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using GrandCentralDispatch.Sample.Remote.Contract.Models;
-using GrandCentralDispatch.Sample.Remote.Contract.Resolvers;
+using GrandCentralDispatch.Contract.Models;
+using GrandCentralDispatch.Contract.Resolvers;
 using GrandCentralDispatch.Extensions;
 using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Monitoring.Extensions;
@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json;
 using Host = GrandCentralDispatch.Models.Host;
 
-namespace GrandCentralDispatch.Sample.Remote.Cluster
+namespace GrandCentralDispatch.Cluster
 {
     public class Startup
     {

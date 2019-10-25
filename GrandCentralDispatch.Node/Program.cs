@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace GrandCentralDispatch.Sample.Remote.Node
+namespace GrandCentralDispatch.Node
 {
     class Program
     {
@@ -54,7 +55,12 @@ namespace GrandCentralDispatch.Sample.Remote.Node
                     new List<ServerPort>
                     {
                         new ServerPort(IPAddress.Any.ToString(),
-                            configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"), ServerCredentials.Insecure)
+                            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_NODE_LISTENING_PORT"))
+                                ? (int.TryParse(Environment.GetEnvironmentVariable("GCD_NODE_LISTENING_PORT"),
+                                    out var port)
+                                    ? port
+                                    : configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"))
+                                : configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"), ServerCredentials.Insecure)
                     },
                     new MagicOnionOptions(true)
                     {

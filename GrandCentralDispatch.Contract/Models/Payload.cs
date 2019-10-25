@@ -1,6 +1,6 @@
 ﻿using MessagePack;
 
-namespace GrandCentralDispatch.Sample.Remote.Contract.Models
+namespace GrandCentralDispatch.Contract.Models
 {
     /// <summary>
     /// This is the payload exchanged between the cluster and its nodes

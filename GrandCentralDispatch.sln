@@ -15,19 +15,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{4021
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Sample.Web", "GrandCentralDispatch.Sample.Web\GrandCentralDispatch.Sample.Web.csproj", "{7FCAB774-7F7F-4D9E-B254-88CEEF4E7229}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Remote", "Remote", "{78760056-E55B-48E8-A05E-FC74B7BDA042}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Node", "GrandCentralDispatch.Node\GrandCentralDispatch.Node.csproj", "{DA187DDD-562C-46A4-AC42-98C43C7C75E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Sample.Remote.Node", "GrandCentralDispatch.Sample.Remote.Node\GrandCentralDispatch.Sample.Remote.Node.csproj", "{DA187DDD-562C-46A4-AC42-98C43C7C75E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Cluster", "GrandCentralDispatch.Cluster\GrandCentralDispatch.Cluster.csproj", "{7C63853A-03D7-47B0-9C36-E1B8D717E0FE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Sample.Remote.Cluster", "GrandCentralDispatch.Sample.Remote.Cluster\GrandCentralDispatch.Sample.Remote.Cluster.csproj", "{7C63853A-03D7-47B0-9C36-E1B8D717E0FE}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Sample.Remote.Contract", "GrandCentralDispatch.Sample.Remote.Contract\GrandCentralDispatch.Sample.Remote.Contract.csproj", "{45B70618-DC1B-4D5D-8377-6204E067DCD6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Contract", "GrandCentralDispatch.Contract\GrandCentralDispatch.Contract.csproj", "{45B70618-DC1B-4D5D-8377-6204E067DCD6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Monitoring", "GrandCentralDispatch.Monitoring\GrandCentralDispatch.Monitoring.csproj", "{E41F6E7A-16FF-4756-85FD-53E28896E809}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.Host", "GrandCentralDispatch.Host\GrandCentralDispatch.Host.csproj", "{30EE5722-DD07-468F-AB6D-E5CEC7D05D81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrandCentralDispatch.PerformanceCounters", "GrandCentralDispatch.PerformanceCounters\GrandCentralDispatch.PerformanceCounters.csproj", "{ECA9166A-29AD-4039-9578-FC421A0C395F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrandCentralDispatch.PerformanceCounters", "GrandCentralDispatch.PerformanceCounters\GrandCentralDispatch.PerformanceCounters.csproj", "{ECA9166A-29AD-4039-9578-FC421A0C395F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{EED4D365-ABF7-46B5-BEE3-14FC19E01DF5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", "{AC668181-CF3E-42D6-B08A-EF82EF5513DC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{2578A2FE-E32D-4F77-A835-DC2AE386F463}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,12 +88,13 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{0DD24D7E-2BD9-4474-86C4-B9504045ED5A} = {EED4D365-ABF7-46B5-BEE3-14FC19E01DF5}
 		{106CB61D-39BB-4BDF-A911-62DB381BC1CF} = {4021B1BC-92BE-498D-94DB-7A0201E89A46}
+		{6EC73AE5-6098-4A7A-BBD6-A674E4C3BB76} = {AC668181-CF3E-42D6-B08A-EF82EF5513DC}
 		{7FCAB774-7F7F-4D9E-B254-88CEEF4E7229} = {4021B1BC-92BE-498D-94DB-7A0201E89A46}
-		{78760056-E55B-48E8-A05E-FC74B7BDA042} = {4021B1BC-92BE-498D-94DB-7A0201E89A46}
-		{DA187DDD-562C-46A4-AC42-98C43C7C75E0} = {78760056-E55B-48E8-A05E-FC74B7BDA042}
-		{7C63853A-03D7-47B0-9C36-E1B8D717E0FE} = {78760056-E55B-48E8-A05E-FC74B7BDA042}
-		{45B70618-DC1B-4D5D-8377-6204E067DCD6} = {78760056-E55B-48E8-A05E-FC74B7BDA042}
+		{DA187DDD-562C-46A4-AC42-98C43C7C75E0} = {2578A2FE-E32D-4F77-A835-DC2AE386F463}
+		{7C63853A-03D7-47B0-9C36-E1B8D717E0FE} = {2578A2FE-E32D-4F77-A835-DC2AE386F463}
+		{45B70618-DC1B-4D5D-8377-6204E067DCD6} = {2578A2FE-E32D-4F77-A835-DC2AE386F463}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1C77010A-13FE-4226-887F-6B158EA659BB}

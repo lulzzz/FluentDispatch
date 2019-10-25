@@ -1,9 +1,9 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using GrandCentralDispatch.Clusters;
-using GrandCentralDispatch.Sample.Remote.Contract.Models;
+using GrandCentralDispatch.Contract.Models;
 
-namespace GrandCentralDispatch.Sample.Remote.Cluster.Controllers
+namespace GrandCentralDispatch.Cluster.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

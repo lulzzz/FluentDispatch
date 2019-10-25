@@ -1,4 +1,4 @@
-version: "2"
+version: "1"
 services:
   cluster:
     environment:
@@ -7,7 +7,7 @@ services:
       GCD_CLUSTER_NODES: "[{'MachineName':'192.168.2.10','Port':9090}]"
     build:
       context: ../
-      dockerfile: GrandCentralDispatch.Sample.Remote.Cluster/Dockerfile
+      dockerfile: GrandCentralDispatch.Cluster/Dockerfile
     ports:
       - "5432:5432"
     networks:

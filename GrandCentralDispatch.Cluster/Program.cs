@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
-namespace GrandCentralDispatch.Sample.Remote.Cluster
+namespace GrandCentralDispatch.Cluster
 {
     class Program
     {

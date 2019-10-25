@@ -3,8 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <AssemblyName>GrandCentralDispatch.Sample.Remote.Node</AssemblyName>
-    <RootNamespace>GrandCentralDispatch.Sample.Remote.Node</RootNamespace>
+    <AssemblyName>GrandCentralDispatch.Cluster</AssemblyName>
+    <RootNamespace>GrandCentralDispatch.Cluster</RootNamespace>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
   <ItemGroup>
@@ -23,12 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoFixture" Version="4.11.0" />
     <PackageReference Include="MagicOnion" Version="2.6.3" />
-    <PackageReference Include="MagicOnion.Hosting" Version="2.6.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />
     <PackageReference Include="Serilog" Version="2.9.0" />
@@ -38,8 +34,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GrandCentralDispatch.Sample.Remote.Contract\GrandCentralDispatch.Sample.Remote.Contract.csproj" />
+    <ProjectReference Include="..\GrandCentralDispatch.Monitoring\GrandCentralDispatch.Monitoring.csproj" />
+    <ProjectReference Include="..\GrandCentralDispatch.Contract\GrandCentralDispatch.Contract.csproj" />
     <ProjectReference Include="..\GrandCentralDispatch\GrandCentralDispatch.csproj" />
   </ItemGroup>
-
 </Project>

@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
-using GrandCentralDispatch.Sample.Remote.Contract.Models;
+using GrandCentralDispatch.Contract.Models;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Resolvers;
 
-namespace GrandCentralDispatch.Sample.Remote.Contract.Resolvers
+namespace GrandCentralDispatch.Contract.Resolvers
 {
     public sealed class PayloadResolver : Item1RemotePartialResolver<Payload, string>
     {
