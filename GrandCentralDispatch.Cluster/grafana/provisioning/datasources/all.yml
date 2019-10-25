@@ -1,0 +1,9 @@
+datasources:
+- name: 'influxdb'
+  type: 'influxdb'
+  access: 'proxy'
+  org_id: 1
+  url: 'http://192.168.2.10:8086'
+  is_default: true
+  version: 1
+  editable: true
