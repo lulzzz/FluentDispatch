@@ -102,18 +102,11 @@ namespace GrandCentralDispatch.Clusters
             ClusterOptions = clusterOptions;
             Progress = progress ?? new Progress<double>();
             CancellationTokenSource = cts ?? new CancellationTokenSource();
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                PersistentCache = new CachingService(new PersistentCacheProvider(
-                    SQLiteDatabase.Connection.GetAwaiter().GetResult(),
-                    new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
-                        {SizeLimit = ClusterOptions.MaxItemsInPersistentCache}))),
-                    loggerFactory));
-            }
-            else
-            {
-                PersistentCache = new CachingService(new DummyCacheProvider());
-            }
+            PersistentCache = new CachingService(new PersistentCacheProvider(
+                SQLiteDatabase.Connection.GetAwaiter().GetResult(),
+                new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
+                    { SizeLimit = ClusterOptions.MaxItemsInPersistentCache }))),
+                loggerFactory));
 
             ClusterMetrics = new ClusterMetrics();
             var interval = new Subject<Unit>();

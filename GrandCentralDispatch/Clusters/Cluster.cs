@@ -14,6 +14,7 @@ using GrandCentralDispatch.Nodes.Dual;
 using GrandCentralDispatch.Nodes.Unary;
 using GrandCentralDispatch.Options;
 using GrandCentralDispatch.Resolvers;
+using Polly;
 
 namespace GrandCentralDispatch.Clusters
 {
@@ -29,6 +30,11 @@ namespace GrandCentralDispatch.Clusters
         /// </summary>
         private readonly List<IAsyncDispatcherNode<TInput, TOutput>> _nodes =
             new List<IAsyncDispatcherNode<TInput, TOutput>>();
+
+        /// <summary>
+        /// Node health subscriptions
+        /// </summary>
+        private readonly List<IDisposable> _nodeHealthSubscriptions = new List<IDisposable>();
 
         /// <summary>
         /// <see cref="AsyncCluster{TInput,TOutput}"/>
@@ -101,7 +107,7 @@ namespace GrandCentralDispatch.Clusters
 
                 foreach (var node in _nodes)
                 {
-                    node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth);
+                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth));
                 }
 
                 LogClusterOptions(circuitBreakerOptions, _nodes.Count);
@@ -214,6 +220,11 @@ namespace GrandCentralDispatch.Clusters
                 {
                     node?.Dispose();
                 }
+
+                foreach (var nodeHealthSubscription in _nodeHealthSubscriptions)
+                {
+                    nodeHealthSubscription?.Dispose();
+                }
             }
 
             Disposed = true;
@@ -231,6 +242,11 @@ namespace GrandCentralDispatch.Clusters
         /// Nodes of the cluster
         /// </summary>
         private readonly List<IUnaryDispatcherNode<TInput>> _nodes = new List<IUnaryDispatcherNode<TInput>>();
+
+        /// <summary>
+        /// Node health subscriptions
+        /// </summary>
+        private readonly List<IDisposable> _nodeHealthSubscriptions = new List<IDisposable>();
 
         /// <summary>
         /// <see cref="Cluster{TInput}"/>
@@ -359,22 +375,31 @@ namespace GrandCentralDispatch.Clusters
 
                 foreach (var node in _nodes)
                 {
-                    node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth);
+                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth));
                 }
 
                 LogClusterOptions(circuitBreakerOptions, _nodes.Count);
-                var persistedItems =
-                    PersistentCache.CacheProvider.RetrieveItemsAsync<TInput>().GetAwaiter().GetResult().ToList();
-                PersistentCache.CacheProvider.FlushDatabaseAsync().GetAwaiter().GetResult();
-                if (persistedItems.Any())
+                var policyResult = Policy.Handle<Exception>().RetryAsync().ExecuteAndCaptureAsync(async () =>
                 {
-                    Logger.LogInformation("Cluster was shutdown while items remained to be processed. Submitting...");
-                    foreach (var item in persistedItems)
+                    var persistedItems =
+                        (await PersistentCache.CacheProvider.RetrieveItemsAsync<TInput>()).ToList();
+                    await PersistentCache.CacheProvider.FlushDatabaseAsync();
+                    if (persistedItems.Any())
                     {
-                        Dispatch(item);
-                    }
+                        Logger.LogInformation(
+                            "Cluster was shutdown while items remained to be processed. Submitting...");
+                        foreach (var item in persistedItems)
+                        {
+                            Dispatch(item);
+                        }
 
-                    Logger.LogInformation("Remaining items have been successfully processed.");
+                        Logger.LogInformation("Remaining items have been successfully processed.");
+                    }
+                }).GetAwaiter().GetResult();
+                if (policyResult.Outcome == OutcomeType.Failure)
+                {
+                    Logger.LogError(
+                        $"Error while processing previously failed items: {policyResult.FinalException?.Message ?? string.Empty}.");
                 }
 
                 Logger.LogInformation("Cluster successfully initialized.");
@@ -553,6 +578,11 @@ namespace GrandCentralDispatch.Clusters
                 {
                     node?.Dispose();
                 }
+
+                foreach (var nodeHealthSubscription in _nodeHealthSubscriptions)
+                {
+                    nodeHealthSubscription?.Dispose();
+                }
             }
 
             Disposed = true;
@@ -574,6 +604,11 @@ namespace GrandCentralDispatch.Clusters
         /// </summary>
         private readonly List<IDualDispatcherNode<TInput1, TInput2>> _nodes =
             new List<IDualDispatcherNode<TInput1, TInput2>>();
+
+        /// <summary>
+        /// Node health subscriptions
+        /// </summary>
+        private readonly List<IDisposable> _nodeHealthSubscriptions = new List<IDisposable>();
 
         /// <summary>
         /// Store the items keys in order to join them on their attributed node
@@ -715,29 +750,36 @@ namespace GrandCentralDispatch.Clusters
 
                 foreach (var node in _nodes)
                 {
-                    node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth);
+                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth));
                 }
 
                 LogClusterOptions(circuitBreakerOptions, _nodes.Count);
-                var persistedItems1 = PersistentCache.CacheProvider.RetrieveItems1Async<TInput1>().GetAwaiter()
-                    .GetResult().ToList();
-                var persistedItems2 = PersistentCache.CacheProvider.RetrieveItems2Async<TInput2>().GetAwaiter()
-                    .GetResult().ToList();
-                PersistentCache.CacheProvider.FlushDatabaseAsync().GetAwaiter().GetResult();
-                if (persistedItems1.Any() || persistedItems2.Any())
+                var policyResult = Policy.Handle<Exception>().RetryAsync().ExecuteAndCaptureAsync(async () =>
                 {
-                    Logger.LogInformation("Cluster was shutdown while items remained to be processed. Submitting...");
-                    foreach (var (key, entity) in persistedItems1)
+                    var persistedItems1 = (await PersistentCache.CacheProvider.RetrieveItems1Async<TInput1>()).ToList();
+                    var persistedItems2 = (await PersistentCache.CacheProvider.RetrieveItems2Async<TInput2>()).ToList();
+                    await PersistentCache.CacheProvider.FlushDatabaseAsync();
+                    if (persistedItems1.Any() || persistedItems2.Any())
                     {
-                        Dispatch(Guid.Parse(key), entity);
-                    }
+                        Logger.LogInformation(
+                            "Cluster was shutdown while items remained to be processed. Submitting...");
+                        foreach (var (key, entity) in persistedItems1)
+                        {
+                            Dispatch(Guid.Parse(key), entity);
+                        }
 
-                    foreach (var (key, entity) in persistedItems2)
-                    {
-                        Dispatch(Guid.Parse(key), entity);
-                    }
+                        foreach (var (key, entity) in persistedItems2)
+                        {
+                            Dispatch(Guid.Parse(key), entity);
+                        }
 
-                    Logger.LogInformation("Remaining items have been successfully processed.");
+                        Logger.LogInformation("Remaining items have been successfully processed.");
+                    }
+                }).GetAwaiter().GetResult();
+                if (policyResult.Outcome == OutcomeType.Failure)
+                {
+                    Logger.LogError(
+                        $"Error while processing previously failed items: {policyResult.FinalException?.Message ?? string.Empty}.");
                 }
 
                 Logger.LogInformation("Cluster successfully initialized.");
@@ -824,29 +866,36 @@ namespace GrandCentralDispatch.Clusters
 
                 foreach (var node in _nodes)
                 {
-                    node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth);
+                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeNodeHealth));
                 }
 
                 LogClusterOptions(circuitBreakerOptions, _nodes.Count);
-                var persistedItems1 = PersistentCache.CacheProvider.RetrieveItems1Async<TInput1>().GetAwaiter()
-                    .GetResult().ToList();
-                var persistedItems2 = PersistentCache.CacheProvider.RetrieveItems2Async<TInput2>().GetAwaiter()
-                    .GetResult().ToList();
-                PersistentCache.CacheProvider.FlushDatabaseAsync().GetAwaiter().GetResult();
-                if (persistedItems1.Any() || persistedItems2.Any())
+                var policyResult = Policy.Handle<Exception>().RetryAsync().ExecuteAndCaptureAsync(async () =>
                 {
-                    Logger.LogInformation("Cluster was shutdown while items remained to be processed. Submitting...");
-                    foreach (var (key, entity) in persistedItems1)
+                    var persistedItems1 = (await PersistentCache.CacheProvider.RetrieveItems1Async<TInput1>()).ToList();
+                    var persistedItems2 = (await PersistentCache.CacheProvider.RetrieveItems2Async<TInput2>()).ToList();
+                    await PersistentCache.CacheProvider.FlushDatabaseAsync();
+                    if (persistedItems1.Any() || persistedItems2.Any())
                     {
-                        Dispatch(Guid.Parse(key), entity);
-                    }
+                        Logger.LogInformation(
+                            "Cluster was shutdown while items remained to be processed. Submitting...");
+                        foreach (var (key, entity) in persistedItems1)
+                        {
+                            Dispatch(Guid.Parse(key), entity);
+                        }
 
-                    foreach (var (key, entity) in persistedItems2)
-                    {
-                        Dispatch(Guid.Parse(key), entity);
-                    }
+                        foreach (var (key, entity) in persistedItems2)
+                        {
+                            Dispatch(Guid.Parse(key), entity);
+                        }
 
-                    Logger.LogInformation("Remaining items have been successfully processed.");
+                        Logger.LogInformation("Remaining items have been successfully processed.");
+                    }
+                }).GetAwaiter().GetResult();
+                if (policyResult.Outcome == OutcomeType.Failure)
+                {
+                    Logger.LogError(
+                        $"Error while processing previously failed items: {policyResult.FinalException?.Message ?? string.Empty}.");
                 }
 
                 Logger.LogInformation("Cluster successfully initialized.");
@@ -1218,6 +1267,11 @@ namespace GrandCentralDispatch.Clusters
                 foreach (var node in _nodes)
                 {
                     node?.Dispose();
+                }
+
+                foreach (var nodeHealthSubscription in _nodeHealthSubscriptions)
+                {
+                    nodeHealthSubscription?.Dispose();
                 }
             }
 
