@@ -71,8 +71,8 @@ namespace GrandCentralDispatch.Clusters
             CircuitBreakerOptions circuitBreakerOptions,
             ILoggerFactory loggerFactory) : base(progress, cts, clusterOptions,
             loggerFactory == null
-                ? NullLogger<Cluster<TInput>>.Instance
-                : loggerFactory.CreateLogger<Cluster<TInput>>(), loggerFactory)
+                ? NullLogger<AsyncCluster<TInput, TOutput>>.Instance
+                : loggerFactory.CreateLogger<AsyncCluster<TInput, TOutput>>(), loggerFactory)
         {
             try
             {
