@@ -15,10 +15,10 @@ using GrandCentralDispatch.Database;
 using GrandCentralDispatch.Helpers;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Options;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Events;
 using GrandCentralDispatch.PerformanceCounters;
+using Polly;
 
 namespace GrandCentralDispatch.Clusters
 {
@@ -72,7 +72,7 @@ namespace GrandCentralDispatch.Clusters
         /// <summary>
         /// Persistent cache to avoid dropped data on system crash
         /// </summary>
-        protected readonly IAppCache PersistentCache;
+        protected IAppCache PersistentCache { get; private set; }
 
         /// <summary>
         /// <see cref="IDisposable"/>
@@ -102,11 +102,20 @@ namespace GrandCentralDispatch.Clusters
             ClusterOptions = clusterOptions;
             Progress = progress ?? new Progress<double>();
             CancellationTokenSource = cts ?? new CancellationTokenSource();
-            PersistentCache = new CachingService(new PersistentCacheProvider(
-                SQLiteDatabase.Connection.GetAwaiter().GetResult(),
-                new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
-                    { SizeLimit = ClusterOptions.MaxItemsInPersistentCache }))),
-                loggerFactory));
+            var policyResult = Policy.Handle<Exception>().RetryAsync().ExecuteAndCaptureAsync(async () =>
+            {
+                PersistentCache = new CachingService(new PersistentCacheProvider(
+                    await SQLiteDatabase.Connection,
+                    new LazyCache.CachingService(new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions
+                        {SizeLimit = ClusterOptions.MaxItemsInPersistentCache}))),
+                    loggerFactory));
+            }).GetAwaiter().GetResult();
+            if (policyResult.Outcome == OutcomeType.Failure)
+            {
+                PersistentCache = new CachingService(new DummyCacheProvider());
+                Logger.LogError(
+                    $"Error while creating persistence cache: {policyResult.FinalException?.Message ?? string.Empty}.");
+            }
 
             ClusterMetrics = new ClusterMetrics();
             var interval = new Subject<Unit>();
@@ -274,6 +283,7 @@ Setting cluster circuit breaker options...
 
             if (disposing)
             {
+                _counterMonitor.CounterUpdate -= OnCounterUpdate;
                 _counterMonitor.Stop();
                 _computeClusterHealthSubscription?.Dispose();
                 CancellationTokenSource?.Cancel(true);
