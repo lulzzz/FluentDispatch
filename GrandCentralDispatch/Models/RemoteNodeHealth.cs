@@ -14,12 +14,12 @@ namespace GrandCentralDispatch.Models
         /// <summary>
         /// Performance counters
         /// </summary>
-        public Dictionary<string, float> PerformanceCounters { get; set; }
+        public Dictionary<string, float> PerformanceCounters { get; internal set; }
 
         /// <summary>
         /// Machine name
         /// </summary>
-        public string MachineName { get; set; }
+        public string MachineName { get; internal set; }
 
         public RemoteNodeHealth()
         {
