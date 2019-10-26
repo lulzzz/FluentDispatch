@@ -7,3 +7,4 @@ datasources:
   is_default: true
   version: 1
   editable: true
+  database: grandcentraldispatchdb

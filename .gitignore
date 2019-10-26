@@ -272,3 +272,6 @@ __pycache__/
 /AzureFunctions/TrackingFunctions/local.settings.Development.json
 
 [Nn]uget.[Cc]onfig
+
+# macOS
+.DS_Store
