@@ -41,33 +41,15 @@ namespace GrandCentralDispatch.Resolvers
     /// </summary>
     /// <typeparam name="TPartial1"><see cref="TPartial1"/></typeparam>
     /// <typeparam name="TPartial2"><see cref="TPartial2"/></typeparam>
-    public class Item1RemotePartialResolver<TPartial1, TPartial2> : Item1RemoteFuncPartialResolver<TPartial1, TPartial2>
+    public class RemotePartialResolver<TPartial1, TPartial2> : RemoteFuncPartialResolver<TPartial1, TPartial2>
     {
         /// <summary>
-        /// Resolve <see cref="GetItem1RemoteFunc"/>
+        /// Resolve <see cref="GetItemRemoteFunc"/>
         /// </summary>
         /// <returns><see cref="Func{TResult}"/></returns>
-        public override Func<TPartial1, NodeMetrics, UnaryResult<TPartial2>> GetItem1RemoteFunc()
+        public override Func<TPartial1, NodeMetrics, UnaryResult<TPartial2>> GetItemRemoteFunc()
         {
-            return ProcessItem1Remotely;
-        }
-    }
-
-    /// <summary>
-    /// Generic resolver which enable overriding the default behavior for each incoming new item
-    /// </summary>
-    /// <typeparam name="TPartial1"><see cref="TPartial1"/></typeparam>
-    /// <typeparam name="TPartial2"><see cref="TPartial2"/></typeparam>
-    public class
-        Item2RemotePartialResolver<TPartial1, TPartial2> : Item2RemoteFuncPartialResolver<TPartial1, TPartial2>
-    {
-        /// <summary>
-        /// Resolve <see cref="GetItem2RemoteFunc"/>
-        /// </summary>
-        /// <returns><see cref="Func{TResult}"/></returns>
-        public override Func<TPartial1, NodeMetrics, UnaryResult<TPartial2>> GetItem2RemoteFunc()
-        {
-            return ProcessItem2Remotely;
+            return ProcessRemotely;
         }
     }
 }

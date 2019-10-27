@@ -32,6 +32,9 @@ namespace GrandCentralDispatch.Processors.Dual
             CancellationTokenSource cts,
             ILogger logger) : base(circuitBreakerPolicy, clusterOptions, logger)
         {
+            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
+            // Then we limit number of items to be processed by a sliding window
+            // Then we process items asynchronously, with a circuit breaker policy
             Items1SubjectSubscription = SynchronizedItems1Subject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
                     {IsBackground = true, Priority = ThreadPriority}))
@@ -65,6 +68,9 @@ namespace GrandCentralDispatch.Processors.Dual
                     },
                     ex => Logger.LogError(ex.Message));
 
+            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
+            // Then we limit number of items to be processed by a sliding window
+            // Then we process items asynchronously, with a circuit breaker policy
             Items2SubjectSubscription = SynchronizedItems2Subject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
                     {IsBackground = true, Priority = ThreadPriority}))
@@ -98,6 +104,9 @@ namespace GrandCentralDispatch.Processors.Dual
                     },
                     ex => Logger.LogError(ex.Message));
 
+            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
+            // Then we limit number of items to be processed by a sliding window
+            // Then we process items asynchronously, with a circuit breaker policy
             Items1ExecutorSubjectSubscription = SynchronizedItems1ExecutorSubject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
                     {IsBackground = true, Priority = ThreadPriority}))
@@ -131,6 +140,9 @@ namespace GrandCentralDispatch.Processors.Dual
                     },
                     ex => Logger.LogError(ex.Message));
 
+            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
+            // Then we limit number of items to be processed by a sliding window
+            // Then we process items asynchronously, with a circuit breaker policy
             Items2ExecutorSubjectSubscription = SynchronizedItems2ExecutorSubject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
                     {IsBackground = true, Priority = ThreadPriority}))

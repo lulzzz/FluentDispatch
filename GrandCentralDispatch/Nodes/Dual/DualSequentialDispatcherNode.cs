@@ -50,19 +50,19 @@ namespace GrandCentralDispatch.Nodes.Dual
         private readonly Func<TInput2, NodeMetrics, CancellationToken, Task<TOutput2>> _item2Resolver;
 
         /// <summary>
-        /// <see cref="IRemoteContract{TInput1}"/>
+        /// <see cref="IRemoteContract{TInput1,TOutput2}"/>
         /// </summary>
         private readonly IRemoteContract<TOutput1, TOutput2> _remoteContract;
 
         /// <summary>
-        /// <see cref="IRemoteContract{TInput1}"/>
+        /// <see cref="IOutputRemoteContract{TInput1,TOutput2}"/>
         /// </summary>
-        private readonly IItem1RemotePartialContract<TInput1, TOutput1> _item1RemoteContract;
+        private readonly IOutputRemoteContract<TInput1, TOutput1> _item1RemoteContract;
 
         /// <summary>
-        /// <see cref="IRemoteContract{TInput1}"/>
+        /// <see cref="IOutputRemoteContract{TInput1,TOutput2}"/>
         /// </summary>
-        private readonly IItem2RemotePartialContract<TInput2, TOutput2> _item2RemoteContract;
+        private readonly IOutputRemoteContract<TInput2, TOutput2> _item2RemoteContract;
 
         /// <summary>
         /// Synchronized subject
@@ -127,16 +127,6 @@ namespace GrandCentralDispatch.Nodes.Dual
         /// Number of currently processed item executors for the current bulk
         /// </summary>
         private long _executorProcessedItems;
-
-        /// <summary>
-        /// Previously processed number of items
-        /// </summary>
-        private long _previouslyProcessedItems;
-
-        /// <summary>
-        /// Previously processed number of item executors
-        /// </summary>
-        private long _previouslyExecutorProcessedItems;
 
         /// <summary>
         /// <see cref="DualSequentialDispatcherNode{TInput1,TInput2,TOutput1,TOutput2}"/>
@@ -242,15 +232,15 @@ namespace GrandCentralDispatch.Nodes.Dual
                 var channel = new Channel(host.MachineName, host.Port,
                     ChannelCredentials.Insecure);
                 _remoteContract = MagicOnionClient.Create<IRemoteContract<TOutput1, TOutput2>>(channel);
-                _item1RemoteContract = MagicOnionClient.Create<IItem1RemotePartialContract<TInput1, TOutput1>>(channel);
-                _item2RemoteContract = MagicOnionClient.Create<IItem2RemotePartialContract<TInput2, TOutput2>>(channel);
+                _item1RemoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput1, TOutput1>>(channel);
+                _item2RemoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput2, TOutput2>>(channel);
                 IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
                 _remoteNodeHealthSubscription =
                     nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
                     {
                         NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
                     });
-                _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
+                _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
             }
 
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
@@ -259,7 +249,7 @@ namespace GrandCentralDispatch.Nodes.Dual
             var item2ProcessSource = new ConcurrentDictionary<Guid, TOutput2>();
             var joinBlock =
                 new JoinBlock<KeyValuePair<Guid, CancellationTokenSource>, KeyValuePair<Guid, CancellationTokenSource>>(
-                    new GroupingDataflowBlockOptions {Greedy = false});
+                    new GroupingDataflowBlockOptions { Greedy = false });
             _item1Source =
                 new TransformBlock<Tuple<Guid, TOutput1, CancellationTokenSource>,
                     KeyValuePair<Guid, CancellationTokenSource>
@@ -315,7 +305,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                             if (CpuUsage > _clusterOptions.LimitCpuUsage)
                             {
                                 var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                                await Task.Delay((int) suspensionTime, ct);
+                                await Task.Delay((int)suspensionTime, ct);
                             }
 
                             if (item1ProcessSource.ContainsKey(combined.Item1.Key) &&
@@ -383,20 +373,14 @@ namespace GrandCentralDispatch.Nodes.Dual
         protected override async Task Process(IList<LinkedItem<TInput1>> bulk, IProgress<double> progress,
             CancellationToken cancellationToken)
         {
-            _previouslyProcessedItems = Interlocked.Exchange(ref _processedItems, 0L);
-            if (!bulk.Any())
-            {
-                await ComputeStatistics();
-                return;
-            }
-
+            var currentProgress = 0;
             foreach (var item in bulk)
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                     .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                         retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(10, retryAttempt)),
+                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         (exception, sleepDuration, retry, context) =>
                         {
                             if (retry >= _clusterOptions.RetryAttempt)
@@ -413,7 +397,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int) suspensionTime, ct);
+                            await Task.Delay((int)suspensionTime, ct);
                         }
 
                         if (_clusterOptions.PersistenceEnabled)
@@ -424,7 +408,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1RemoteContract.ProcessItem1Remotely(item.Entity, NodeMetrics),
+                                await _item1RemoteContract.ProcessRemotely(item.Entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -441,7 +425,8 @@ namespace GrandCentralDispatch.Nodes.Dual
                     finally
                     {
                         Interlocked.Increment(ref _processedItems);
-                        progress.Report((double) _processedItems / bulk.Count);
+                        currentProgress++;
+                        progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -453,8 +438,6 @@ namespace GrandCentralDispatch.Nodes.Dual
                             : "An error has occured while processing the item.");
                 }
             }
-
-            await ComputeStatistics();
         }
 
         /// <summary>
@@ -467,20 +450,14 @@ namespace GrandCentralDispatch.Nodes.Dual
         protected override async Task Process(IList<LinkedItem<TInput2>> bulk, IProgress<double> progress,
             CancellationToken cancellationToken)
         {
-            _previouslyProcessedItems = Interlocked.Exchange(ref _processedItems, 0L);
-            if (!bulk.Any())
-            {
-                await ComputeStatistics();
-                return;
-            }
-
+            var currentProgress = 0;
             foreach (var item in bulk)
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                     .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                         retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(10, retryAttempt)),
+                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         (exception, sleepDuration, retry, context) =>
                         {
                             if (retry >= _clusterOptions.RetryAttempt)
@@ -497,7 +474,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int) suspensionTime, ct);
+                            await Task.Delay((int)suspensionTime, ct);
                         }
 
                         if (_clusterOptions.PersistenceEnabled)
@@ -508,7 +485,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2RemoteContract.ProcessItem2Remotely(item.Entity, NodeMetrics),
+                                await _item2RemoteContract.ProcessRemotely(item.Entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -525,7 +502,8 @@ namespace GrandCentralDispatch.Nodes.Dual
                     finally
                     {
                         Interlocked.Increment(ref _processedItems);
-                        progress.Report((double) _processedItems / bulk.Count);
+                        currentProgress++;
+                        progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -537,8 +515,6 @@ namespace GrandCentralDispatch.Nodes.Dual
                             : "An error has occured while processing the item.");
                 }
             }
-
-            await ComputeStatistics();
         }
 
         /// <summary>
@@ -551,20 +527,14 @@ namespace GrandCentralDispatch.Nodes.Dual
         protected override async Task Process(IList<LinkedFuncItem<TInput1>> bulk, IProgress<double> progress,
             CancellationToken cancellationToken)
         {
-            _previouslyExecutorProcessedItems = Interlocked.Exchange(ref _executorProcessedItems, 0L);
-            if (!bulk.Any())
-            {
-                await ComputeStatistics();
-                return;
-            }
-
+            var currentProgress = 0;
             foreach (var item in bulk)
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                     .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                         retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(10, retryAttempt)),
+                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         (exception, sleepDuration, retry, context) =>
                         {
                             if (retry >= _clusterOptions.RetryAttempt)
@@ -581,7 +551,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int) suspensionTime, ct);
+                            await Task.Delay((int)suspensionTime, ct);
                         }
 
                         var entity = item.Entity();
@@ -594,7 +564,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1RemoteContract.ProcessItem1Remotely(entity, NodeMetrics),
+                                await _item1RemoteContract.ProcessRemotely(entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -611,7 +581,8 @@ namespace GrandCentralDispatch.Nodes.Dual
                     finally
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
-                        progress.Report((double) _executorProcessedItems / bulk.Count);
+                        currentProgress++;
+                        progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -623,8 +594,6 @@ namespace GrandCentralDispatch.Nodes.Dual
                             : "An error has occured while processing the item.");
                 }
             }
-
-            await ComputeStatistics();
         }
 
         /// <summary>
@@ -637,20 +606,14 @@ namespace GrandCentralDispatch.Nodes.Dual
         protected override async Task Process(IList<LinkedFuncItem<TInput2>> bulk, IProgress<double> progress,
             CancellationToken cancellationToken)
         {
-            _previouslyExecutorProcessedItems = Interlocked.Exchange(ref _executorProcessedItems, 0L);
-            if (!bulk.Any())
-            {
-                await ComputeStatistics();
-                return;
-            }
-
+            var currentProgress = 0;
             foreach (var item in bulk)
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                     .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                         retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(10, retryAttempt)),
+                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         (exception, sleepDuration, retry, context) =>
                         {
                             if (retry >= _clusterOptions.RetryAttempt)
@@ -667,7 +630,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int) suspensionTime, ct);
+                            await Task.Delay((int)suspensionTime, ct);
                         }
 
                         var entity = item.Entity();
@@ -680,7 +643,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2RemoteContract.ProcessItem2Remotely(entity, NodeMetrics),
+                                await _item2RemoteContract.ProcessRemotely(entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -697,7 +660,8 @@ namespace GrandCentralDispatch.Nodes.Dual
                     finally
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
-                        progress.Report((double) _executorProcessedItems / bulk.Count);
+                        currentProgress++;
+                        progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -709,8 +673,6 @@ namespace GrandCentralDispatch.Nodes.Dual
                             : "An error has occured while processing the item.");
                 }
             }
-
-            await ComputeStatistics();
         }
 
         /// <summary>
@@ -757,12 +719,13 @@ namespace GrandCentralDispatch.Nodes.Dual
         /// <summary>
         /// Compute node statistics
         /// </summary>
-        private async Task ComputeStatistics()
+        protected override async Task ComputeMetrics()
         {
+            await base.ComputeMetrics();
             if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
-            NodeMetrics.CurrentThroughput = _previouslyProcessedItems + _previouslyExecutorProcessedItems;
+            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) + Interlocked.Exchange(ref _executorProcessedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
             if (_clusterOptions.ExecuteRemotely)

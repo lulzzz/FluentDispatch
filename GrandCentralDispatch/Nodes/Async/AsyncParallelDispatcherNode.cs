@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dasync.Collections;
@@ -39,11 +38,6 @@ namespace GrandCentralDispatch.Nodes.Async
         /// Number of currently processed items for the current bulk
         /// </summary>
         private long _processedItems;
-
-        /// <summary>
-        /// Previously processed number of items
-        /// </summary>
-        private long _previouslyProcessedItems;
 
         /// <summary>
         /// <see cref="AsyncParallelDispatcherNode{TInput,TOutput}"/>
@@ -95,27 +89,21 @@ namespace GrandCentralDispatch.Nodes.Async
         protected override async Task Process(IList<AsyncItem<TInput, TOutput>> bulk, IProgress<double> progress,
             CancellationToken cancellationToken)
         {
-            _previouslyProcessedItems = Interlocked.Exchange(ref _processedItems, 0L);
-            if (!bulk.Any())
-            {
-                ComputeStatistics();
-                return;
-            }
-
+            var currentProgress = 0;
             await bulk.ParallelForEachAsync(async item =>
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                     .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                         retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(10, retryAttempt)),
+                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         (exception, sleepDuration, retry, context) =>
                         {
                             if (retry >= _clusterOptions.RetryAttempt)
                             {
                                 _logger.LogError(
                                     $"Could not process item after {retry} retry times: {exception.Message}");
-                                item.TaskCompletionSource.SetException(exception);
+                                item.TaskCompletionSource.TrySetException(exception);
                             }
                         });
 
@@ -126,33 +114,34 @@ namespace GrandCentralDispatch.Nodes.Async
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int) suspensionTime, ct);
+                            await Task.Delay((int)suspensionTime, ct);
                         }
 
                         var result = await item.Selector(item.Item);
-                        item.TaskCompletionSource.SetResult(result);
+                        item.TaskCompletionSource.TrySetResult(result);
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
                         _logger.LogTrace("The item process has been cancelled.");
-                        item.TaskCompletionSource.SetCanceled();
+                        item.TaskCompletionSource.TrySetCanceled();
                     }
                     finally
                     {
                         Interlocked.Increment(ref _processedItems);
-                        progress.Report((double) _processedItems / bulk.Count);
+                        Interlocked.Increment(ref currentProgress);
+                        progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
                 if (policyResult.Outcome == OutcomeType.Failure)
                 {
+                    item.TaskCompletionSource.TrySetException(policyResult.FinalException);
                     _logger.LogCritical(
                         policyResult.FinalException != null
                             ? $"Could not process item: {policyResult.FinalException.Message}."
                             : "An error has occured while processing the item.");
                 }
             }, cancellationToken).ConfigureAwait(false);
-            ComputeStatistics();
         }
 
         /// <summary>
@@ -176,12 +165,13 @@ namespace GrandCentralDispatch.Nodes.Async
         /// <summary>
         /// Compute node statistics
         /// </summary>
-        private void ComputeStatistics()
+        protected override async Task ComputeMetrics()
         {
+            await base.ComputeMetrics();
             if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
-            NodeMetrics.CurrentThroughput = _previouslyProcessedItems;
+            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
             NodeMetrics.RefreshSubject.OnNext(NodeMetrics.Id);

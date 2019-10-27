@@ -234,7 +234,7 @@ Setting cluster circuit breaker options...
         protected virtual void ComputeClusterHealth()
         {
             var clusterHealth = new ClusterHealth();
-            foreach (var performanceCounter in _performanceCounters)
+            foreach (var performanceCounter in _performanceCounters.ToList())
             {
                 if (!clusterHealth.PerformanceCounters.ContainsKey(performanceCounter.Key) &&
                     !clusterHealth.PerformanceCounters.TryAdd(performanceCounter.Key,

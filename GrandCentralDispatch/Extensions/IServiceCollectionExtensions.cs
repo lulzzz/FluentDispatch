@@ -28,6 +28,18 @@ namespace GrandCentralDispatch.Extensions
         }
 
         /// <summary>
+        /// Add <see cref="IRemoteCluster{TInput, TOutput}"/> to <see cref="IServiceCollection"/>
+        /// </summary>
+        /// <typeparam name="TInput"></typeparam>
+        /// <typeparam name="TOutput"></typeparam>
+        /// <param name="services"><see cref="IServiceCollection"/></param>
+        public static void AddRemoteCluster<TInput, TOutput>(this IServiceCollection services)
+        {
+            services.TryAddSingleton<IRemoteCluster<TInput, TOutput>, RemoteCluster<TInput, TOutput>>();
+            services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<IRemoteCluster<TInput, TOutput>>());
+        }
+
+        /// <summary>
         /// Add <see cref="IAsyncCluster{TInput,TOutput}"/> to <see cref="IServiceCollection"/>
         /// </summary>
         /// <typeparam name="TInput"></typeparam>
@@ -89,8 +101,8 @@ namespace GrandCentralDispatch.Extensions
         /// <param name="item2Resolver"><see cref="Resolver{TInput2}"/></param>
         /// <param name="finalResolver"><see cref="Resolver{TOutput1}"/></param>
         public static void AddRemoteCluster<TInput1, TInput2, TOutput1, TOutput2>(this IServiceCollection services,
-            Func<IServiceProvider, Item1RemotePartialResolver<TInput1, TOutput1>> item1Resolver,
-            Func<IServiceProvider, Item2RemotePartialResolver<TInput2, TOutput2>> item2Resolver,
+            Func<IServiceProvider, RemotePartialResolver<TInput1, TOutput1>> item1Resolver,
+            Func<IServiceProvider, RemotePartialResolver<TInput2, TOutput2>> item2Resolver,
             Func<IServiceProvider, DualFuncRemoteResolver<TOutput1, TOutput2>> finalResolver)
         {
             services.AddMemoryCache();

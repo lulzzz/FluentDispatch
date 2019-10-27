@@ -10,7 +10,7 @@ using GrandCentralDispatch.Resolvers;
 
 namespace GrandCentralDispatch.Contract.Resolvers
 {
-    public sealed class UriResolver : Item2RemotePartialResolver<Uri, string>
+    public sealed class UriResolver : RemotePartialResolver<Uri, string>
     {
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
@@ -27,7 +27,7 @@ namespace GrandCentralDispatch.Contract.Resolvers
         /// <param name="item"><see cref="KeyValuePair{TKey,TValue}"/></param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
         /// <returns><see cref="Task"/></returns>
-        public override async UnaryResult<string> ProcessItem2Remotely(Uri item,
+        public override async UnaryResult<string> ProcessRemotely(Uri item,
             NodeMetrics nodeMetrics)
         {
             _logger.LogInformation(

@@ -42,17 +42,14 @@ namespace GrandCentralDispatch.Processors
             var scheduler = Scheduler.Default;
             _timerSubscription = interval.Select(_ => Observable.Interval(TimeSpan.FromSeconds(1)))
                 .Switch()
-                .Select(duration => Observable.FromAsync(ComputeCpuUsageForProcess))
+                .Select(duration => Observable.FromAsync(ComputeMetrics))
                 .Switch()
-                .ObserveOn(scheduler).Subscribe(cpuUsage => { CpuUsage = cpuUsage; });
+                .ObserveOn(scheduler).Subscribe();
 
             interval.OnNext(Unit.Default);
-            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
-            // Then we limit number of items to be processed by a sliding window
-            // Then we process items asynchronously, with a circuit breaker policy
             switch (ClusterOptions.LimitCpuUsage)
             {
-                case int limit when limit >= 60:
+                case int limit when limit >= 60 && limit < 80:
                     ThreadPriority = ThreadPriority.AboveNormal;
                     break;
                 case int limit when limit >= 40:
@@ -79,6 +76,15 @@ namespace GrandCentralDispatch.Processors
         ~Processor()
         {
             Dispose(false);
+        }
+
+        /// <summary>
+        /// Compute metrics
+        /// </summary>
+        /// <returns></returns>
+        protected virtual async Task ComputeMetrics()
+        {
+            CpuUsage = await ComputeCpuUsageForProcess();
         }
 
         /// <summary>

@@ -6,6 +6,27 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Clusters
 {
     /// <summary>
+    /// The cluster which is in charge of distributing the load to the configured remote nodes.
+    /// </summary>
+    /// <typeparam name="TInput"></typeparam>
+    /// <typeparam name="TOutput"></typeparam>
+    public interface IRemoteCluster<TInput, TOutput> : IExposeMetrics, IDisposable
+    {
+        /// <summary>
+        /// Dispatch an item to the cluster and wait for the result computed remotely
+        /// </summary>
+        /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+        /// <param name="item"><see cref="TInput"/></param>
+        /// <returns><see cref="TOutput"/></returns>
+        Task<TOutput> ExecuteAsync(TInput item);
+
+        /// <summary>
+        /// <see cref="ClusterMetrics"/>
+        /// </summary>
+        ClusterMetrics ClusterMetrics { get; }
+    }
+
+    /// <summary>
     /// The cluster which is in charge of distributing the load to the configured nodes.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>

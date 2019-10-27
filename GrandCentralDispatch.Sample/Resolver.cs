@@ -16,7 +16,7 @@ namespace GrandCentralDispatch.Sample
 
         private static readonly ThreadLocal<Random> Random = new ThreadLocal<Random>(() =>
         {
-            var seed = (int) (Environment.TickCount & 0xFFFFFF00 | (byte) (Interlocked.Increment(ref _tracker) % 255));
+            var seed = (int)(Environment.TickCount & 0xFFFFFF00 | (byte)(Interlocked.Increment(ref _tracker) % 255));
             var random = new Random(seed);
             return random;
         });
@@ -57,12 +57,11 @@ namespace GrandCentralDispatch.Sample
         protected override async Task Process(Message message, NodeMetrics nodeMetrics,
             CancellationToken cancellationToken)
         {
-            if (!_nodes.ContainsKey(nodeMetrics.Id) &&
-                _nodes.TryAdd(nodeMetrics.Id,
-                    _clusterProgressBar.Spawn(0, $"Node {nodeMetrics.Id} pending process...",
-                        _nodeProgressBarOptions)))
+            if (!_nodes.ContainsKey(nodeMetrics.Id))
             {
-                // New child progress bar added
+                var progressBar = _clusterProgressBar.Spawn(int.MaxValue, $"Node {nodeMetrics.Id} pending process...",
+                        _nodeProgressBarOptions);
+                _nodes.TryAdd(nodeMetrics.Id, progressBar);
             }
 
             if (_nodes.TryGetValue(nodeMetrics.Id, out var nodeProgressBar))
@@ -76,9 +75,9 @@ namespace GrandCentralDispatch.Sample
 
                 // Simulate quite long processing time for each message, but could be stressful I/O, networking, ...
                 await Task.Delay(125, cancellationToken);
-                if (nodeProgressBar.CurrentTick == nodeProgressBar.MaxTicks)
+                if (nodeMetrics.CurrentThroughput > 0L && nodeProgressBar.CurrentTick > 0)
                 {
-                    nodeProgressBar.MaxTicks = (int) nodeMetrics.TotalItemsProcessed;
+                    nodeProgressBar.MaxTicks = (int)nodeMetrics.TotalItemsProcessed;
                 }
 
                 nodeProgressBar.Tick(

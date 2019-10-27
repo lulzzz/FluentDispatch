@@ -38,4 +38,8 @@
     <ProjectReference Include="..\GrandCentralDispatch.PerformanceCounters\GrandCentralDispatch.PerformanceCounters.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Nodes\Remote\" />
+    <Folder Include="Processors\Remote\" />
+  </ItemGroup>
 </Project>

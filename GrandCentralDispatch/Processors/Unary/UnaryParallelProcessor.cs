@@ -31,6 +31,9 @@ namespace GrandCentralDispatch.Processors.Unary
             CancellationTokenSource cts,
             ILogger logger) : base(circuitBreakerPolicy, clusterOptions, logger)
         {
+            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
+            // Then we limit number of items to be processed by a sliding window
+            // Then we process items asynchronously, with a circuit breaker policy
             ItemsSubjectSubscription = SynchronizedItemsSubject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
                     {IsBackground = true, Priority = ThreadPriority}))
@@ -64,6 +67,9 @@ namespace GrandCentralDispatch.Processors.Unary
                     },
                     ex => Logger.LogError(ex.Message));
 
+            // We observe new items on an EventLoopScheduler which is backed by a dedicated background thread
+            // Then we limit number of items to be processed by a sliding window
+            // Then we process items asynchronously, with a circuit breaker policy
             ItemsExecutorSubjectSubscription = SynchronizedItemsExecutorSubject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
                     {IsBackground = true, Priority = ThreadPriority}))
