@@ -136,8 +136,9 @@ namespace GrandCentralDispatch.Clusters
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> ExecuteAsync(TInput item)
+        public async Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken)
         {
             var availableNodes = _nodes
                 .Where(node =>
@@ -151,13 +152,13 @@ namespace GrandCentralDispatch.Clusters
                         node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
                             ? node1
                             : node2);
-                    return await node.ExecuteAsync(item);
+                    return await node.ExecuteAsync(item, cancellationToken);
                 }
                 else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                 {
                     var node = availableNodes.ElementAt(Random.Value.Next(0,
                         availableNodes.Count - 1));
-                    return await node.ExecuteAsync(item);
+                    return await node.ExecuteAsync(item, cancellationToken);
                 }
                 else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Healthiest)
                 {
@@ -172,7 +173,7 @@ namespace GrandCentralDispatch.Clusters
                             .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
-                    return await node.ExecuteAsync(item);
+                    return await node.ExecuteAsync(item, cancellationToken);
                 }
                 else
                 {
@@ -350,8 +351,9 @@ namespace GrandCentralDispatch.Clusters
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="selector"></param>
         /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item)
+        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
         {
             var availableNodes = _nodes
                 .Where(node =>
@@ -365,13 +367,13 @@ namespace GrandCentralDispatch.Clusters
                         node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
                             ? node1
                             : node2);
-                    return await node.DispatchAsync(selector, item);
+                    return await node.DispatchAsync(selector, item, cancellationToken);
                 }
                 else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                 {
                     var node = availableNodes.ElementAt(Random.Value.Next(0,
                         availableNodes.Count - 1));
-                    return await node.DispatchAsync(selector, item);
+                    return await node.DispatchAsync(selector, item, cancellationToken);
                 }
                 else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Healthiest)
                 {
@@ -386,7 +388,7 @@ namespace GrandCentralDispatch.Clusters
                             .Single(counter => counter.Key == "CPU Usage").Value
                             ? node1
                             : node2);
-                    return await node.DispatchAsync(selector, item);
+                    return await node.DispatchAsync(selector, item, cancellationToken);
                 }
                 else
                 {

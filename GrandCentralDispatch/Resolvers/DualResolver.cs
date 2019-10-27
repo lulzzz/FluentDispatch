@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MagicOnion;
-using MessagePack;
 using GrandCentralDispatch.Models;
 
 namespace GrandCentralDispatch.Resolvers
@@ -35,23 +33,6 @@ namespace GrandCentralDispatch.Resolvers
             CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-    }
-
-    /// <summary>
-    /// Generic resolver which enable overriding the default behavior for each incoming new item
-    /// </summary>
-    /// <typeparam name="TOutput1"><see cref="TOutput1"/></typeparam>
-    /// <typeparam name="TOutput2"><see cref="TOutput2"/></typeparam>
-    public class DualFuncRemoteResolver<TOutput1, TOutput2> : FuncRemoteResolver<TOutput1, TOutput2>
-    {
-        /// <summary>
-        /// Resolve
-        /// </summary>
-        /// <returns><see cref="Func{TResult}"/></returns>
-        public override Func<TOutput1, TOutput2, NodeMetrics, UnaryResult<Nil>> GetItemRemoteFunc()
-        {
-            return ProcessRemotely;
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MagicOnion;
 using GrandCentralDispatch.Models;
 
 namespace GrandCentralDispatch.Resolvers
@@ -36,20 +35,18 @@ namespace GrandCentralDispatch.Resolvers
         }
     }
 
+
     /// <summary>
-    /// Generic resolver which enable overriding the default behavior for each incoming new item
+    /// Resolve the processing function which will be applied to each <see cref="TInput"/>
     /// </summary>
-    /// <typeparam name="TPartial1"><see cref="TPartial1"/></typeparam>
-    /// <typeparam name="TPartial2"><see cref="TPartial2"/></typeparam>
-    public class RemotePartialResolver<TPartial1, TPartial2> : RemoteFuncPartialResolver<TPartial1, TPartial2>
+    /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
+    /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+    public abstract class FuncPartialResolver<TInput, TOutput>
     {
         /// <summary>
-        /// Resolve <see cref="GetItemRemoteFunc"/>
+        /// Retrieve the processing function
         /// </summary>
         /// <returns><see cref="Func{TResult}"/></returns>
-        public override Func<TPartial1, NodeMetrics, UnaryResult<TPartial2>> GetItemRemoteFunc()
-        {
-            return ProcessRemotely;
-        }
+        public abstract Func<TInput, NodeMetrics, CancellationToken, Task<TOutput>> GetItemFunc();
     }
 }

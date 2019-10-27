@@ -181,11 +181,12 @@ namespace GrandCentralDispatch.Nodes.Remote
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> ExecuteAsync(TInput item)
+        public async Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await ProcessAsync(new RemoteItem<TInput, TOutput>(taskCompletionSource, item));
+            return await ProcessAsync(new RemoteItem<TInput, TOutput>(taskCompletionSource, item, cancellationToken));
         }
 
         /// <summary>

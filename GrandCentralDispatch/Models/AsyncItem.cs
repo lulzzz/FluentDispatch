@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GrandCentralDispatch.Models
@@ -11,12 +12,15 @@ namespace GrandCentralDispatch.Models
 
         public TInput Item { get; }
 
+        public CancellationToken CancellationToken { get; }
+
         public AsyncItem(TaskCompletionSource<TOutput> taskCompletionSource, Func<TInput, Task<TOutput>> selector,
-            TInput item)
+            TInput item, CancellationToken cancellationToken)
         {
             TaskCompletionSource = taskCompletionSource;
             Selector = selector;
             Item = item;
+            CancellationToken = cancellationToken;
         }
     }
 }

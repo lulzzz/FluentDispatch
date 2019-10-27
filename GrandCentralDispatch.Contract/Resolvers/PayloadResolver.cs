@@ -7,7 +7,7 @@ using GrandCentralDispatch.Resolvers;
 
 namespace GrandCentralDispatch.Contract.Resolvers
 {
-    public sealed class PayloadResolver : RemotePartialResolver<Payload, string>
+    public sealed class PayloadResolver : Item1RemotePartialResolver<Payload, string>
     {
         private readonly ILogger _logger;
 
@@ -21,8 +21,8 @@ namespace GrandCentralDispatch.Contract.Resolvers
         /// </summary>
         /// <param name="item"><see cref="Payload"/></param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
-        /// <returns><see cref="Task"/></returns>
-        public override async UnaryResult<string> ProcessRemotely(Payload item,
+        /// <returns><see cref="UnaryResult{string}"/></returns>
+        public override async UnaryResult<string> ProcessItem1Remotely(Payload item,
             NodeMetrics nodeMetrics)
         {
             _logger.LogInformation(

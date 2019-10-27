@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Hubs.Receiver;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.PerformanceCounters;
+using System.Linq;
 
 namespace GrandCentralDispatch.Hubs.Hub
 {
@@ -78,7 +79,7 @@ namespace GrandCentralDispatch.Hubs.Hub
                 MachineName = Environment.MachineName
             };
 
-            foreach (var performanceCounter in _performanceCounters)
+            foreach (var performanceCounter in _performanceCounters.ToList())
             {
                 remoteNodeHealth.PerformanceCounters.Add(performanceCounter.Key,
                     Convert.ToInt64(performanceCounter.Value));

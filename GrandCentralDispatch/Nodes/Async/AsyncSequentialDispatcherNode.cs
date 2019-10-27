@@ -149,11 +149,12 @@ namespace GrandCentralDispatch.Nodes.Async
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="selector"></param>
         /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item)
+        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await AddAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, selector, item));
+            return await AddAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
         }
 
         /// <summary>

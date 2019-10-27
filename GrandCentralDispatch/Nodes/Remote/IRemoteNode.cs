@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Models;
 
@@ -16,8 +17,9 @@ namespace GrandCentralDispatch.Nodes.Remote
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        Task<TOutput> ExecuteAsync(TInput item);
+        Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken);
 
         /// <summary>
         /// <see cref="NodeMetrics"/>

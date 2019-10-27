@@ -21,7 +21,7 @@ namespace GrandCentralDispatch.Contract.Resolvers
         /// <param name="payload">Payload value</param>
         /// <param name="content">Downloaded content</param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
-        /// <returns>True if handled correctly</returns>
+        /// <returns><see cref="UnaryResult{Nil}"/></returns>
         public override UnaryResult<Nil> ProcessRemotely(string payload,
             string content,
             NodeMetrics nodeMetrics)

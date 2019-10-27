@@ -56,14 +56,14 @@ namespace GrandCentralDispatch.Nodes.Dual
         private readonly IRemoteContract<TOutput1, TOutput2> _remoteContract;
 
         /// <summary>
-        /// <see cref="IOutputRemoteContract{TInput1,TOutput2}"/>
+        /// <see cref="IOutputItem1RemoteContract{TInput1,TOutput2}"/>
         /// </summary>
-        private readonly IOutputRemoteContract<TInput1, TOutput1> _item1RemoteContract;
+        private readonly IOutputItem1RemoteContract<TInput1, TOutput1> _item1RemoteContract;
 
         /// <summary>
-        /// <see cref="IOutputRemoteContract{TInput1,TOutput2}"/>
+        /// <see cref="IOutputItem2RemoteContract{TInput1,TOutput2}"/>
         /// </summary>
-        private readonly IOutputRemoteContract<TInput2, TOutput2> _item2RemoteContract;
+        private readonly IOutputItem2RemoteContract<TInput2, TOutput2> _item2RemoteContract;
 
         /// <summary>
         /// Synchronized subject
@@ -233,8 +233,8 @@ namespace GrandCentralDispatch.Nodes.Dual
                 var channel = new Channel(host.MachineName, host.Port,
                     ChannelCredentials.Insecure);
                 _remoteContract = MagicOnionClient.Create<IRemoteContract<TOutput1, TOutput2>>(channel);
-                _item1RemoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput1, TOutput1>>(channel);
-                _item2RemoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput2, TOutput2>>(channel);
+                _item1RemoteContract = MagicOnionClient.Create<IOutputItem1RemoteContract<TInput1, TOutput1>>(channel);
+                _item2RemoteContract = MagicOnionClient.Create<IOutputItem2RemoteContract<TInput2, TOutput2>>(channel);
                 IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
                 _remoteNodeHealthSubscription =
                     nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
@@ -409,7 +409,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1RemoteContract.ProcessRemotely(item.Entity, NodeMetrics),
+                                await _item1RemoteContract.ProcessItem1Remotely(item.Entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -486,7 +486,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2RemoteContract.ProcessRemotely(item.Entity, NodeMetrics),
+                                await _item2RemoteContract.ProcessItem2Remotely(item.Entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -565,7 +565,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1RemoteContract.ProcessRemotely(entity, NodeMetrics),
+                                await _item1RemoteContract.ProcessItem1Remotely(entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else
@@ -644,7 +644,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                         if (_clusterOptions.ExecuteRemotely)
                         {
                             _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2RemoteContract.ProcessRemotely(entity, NodeMetrics),
+                                await _item2RemoteContract.ProcessItem2Remotely(entity, NodeMetrics),
                                 item.CancellationTokenSource));
                         }
                         else

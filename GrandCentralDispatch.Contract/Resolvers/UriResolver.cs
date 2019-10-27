@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Models;
@@ -10,7 +8,7 @@ using GrandCentralDispatch.Resolvers;
 
 namespace GrandCentralDispatch.Contract.Resolvers
 {
-    public sealed class UriResolver : RemotePartialResolver<Uri, string>
+    public sealed class UriResolver : Item2RemotePartialResolver<Uri, string>
     {
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
@@ -24,10 +22,10 @@ namespace GrandCentralDispatch.Contract.Resolvers
         /// <summary>
         /// Process each new URI and download its content
         /// </summary>
-        /// <param name="item"><see cref="KeyValuePair{TKey,TValue}"/></param>
+        /// <param name="item"><see cref="Uri"/></param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
-        /// <returns><see cref="Task"/></returns>
-        public override async UnaryResult<string> ProcessRemotely(Uri item,
+        /// <returns><see cref="UnaryResult{string}"/></returns>
+        public override async UnaryResult<string> ProcessItem2Remotely(Uri item,
             NodeMetrics nodeMetrics)
         {
             _logger.LogInformation(

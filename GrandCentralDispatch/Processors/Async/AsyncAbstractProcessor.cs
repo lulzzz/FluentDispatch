@@ -38,6 +38,11 @@ namespace GrandCentralDispatch.Processors.Async
         {
             Interlocked.Increment(ref _totalItemsProcessed);
             SynchronizedItemsSubject.OnNext(item);
+            item.CancellationToken.Register(() =>
+            {
+                item.TaskCompletionSource.TrySetCanceled();
+            });
+
             return item.TaskCompletionSource.Task;
         }
 

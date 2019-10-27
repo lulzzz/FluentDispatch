@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace GrandCentralDispatch.Models
 {
@@ -8,10 +9,13 @@ namespace GrandCentralDispatch.Models
 
         public TInput Item { get; }
 
-        public RemoteItem(TaskCompletionSource<TOutput> taskCompletionSource, TInput item)
+        public CancellationToken CancellationToken { get; }
+
+        public RemoteItem(TaskCompletionSource<TOutput> taskCompletionSource, TInput item, CancellationToken cancellationToken)
         {
             TaskCompletionSource = taskCompletionSource;
             Item = item;
+            CancellationToken = cancellationToken;
         }
     }
 }
