@@ -40,7 +40,7 @@ namespace GrandCentralDispatch.Processors
             ClusterOptions = clusterOptions;
             var interval = new Subject<Unit>();
             var scheduler = Scheduler.Default;
-            _timerSubscription = interval.Select(_ => Observable.Interval(TimeSpan.FromSeconds(1)))
+            _timerSubscription = interval.Select(_ => Observable.Interval(TimeSpan.FromSeconds(5)))
                 .Switch()
                 .Select(duration => Observable.FromAsync(ComputeMetrics))
                 .Switch()
