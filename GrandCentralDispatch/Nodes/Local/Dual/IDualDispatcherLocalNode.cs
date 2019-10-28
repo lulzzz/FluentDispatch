@@ -1,14 +1,14 @@
 ﻿using System;
 using GrandCentralDispatch.Models;
 
-namespace GrandCentralDispatch.Nodes.Dual
+namespace GrandCentralDispatch.Nodes.Local.Dual
 {
     /// <summary>
     /// Node which process items.
     /// </summary>
     /// <typeparam name="TInput1"></typeparam>
     /// <typeparam name="TInput2"></typeparam>
-    internal interface IDualDispatcherNode<TInput1, TInput2> : IDisposable
+    internal interface IDualDispatcherLocalNode<TInput1, TInput2> : IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="TInput1"/> to the node.

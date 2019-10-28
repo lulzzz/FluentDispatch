@@ -49,13 +49,10 @@ namespace GrandCentralDispatch.Processors
             interval.OnNext(Unit.Default);
             switch (ClusterOptions.LimitCpuUsage)
             {
-                case int limit when limit >= 60 && limit < 80:
-                    ThreadPriority = ThreadPriority.AboveNormal;
-                    break;
-                case int limit when limit >= 40:
+                case int limit when limit >= 80:
                     ThreadPriority = ThreadPriority.Normal;
                     break;
-                case int limit when limit >= 20:
+                case int limit when limit >= 40:
                     ThreadPriority = ThreadPriority.BelowNormal;
                     break;
                 case int limit when limit >= 0:

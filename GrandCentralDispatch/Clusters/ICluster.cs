@@ -7,11 +7,11 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Clusters
 {
     /// <summary>
-    /// The cluster which is in charge of distributing the load to the configured remote nodes.
+    /// The cluster which is in charge of distributing the load to the configured nodes.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    public interface IRemoteCluster<TInput, TOutput> : IExposeMetrics, IDisposable
+    public interface IAsyncCluster<TInput, TOutput> : IExposeMetrics, IDisposable
     {
         /// <summary>
         /// Execute an item to the cluster instantly
@@ -20,21 +20,8 @@ namespace GrandCentralDispatch.Clusters
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken);
+        Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
 
-        /// <summary>
-        /// <see cref="ClusterMetrics"/>
-        /// </summary>
-        ClusterMetrics ClusterMetrics { get; }
-    }
-
-    /// <summary>
-    /// The cluster which is in charge of distributing the load to the configured nodes.
-    /// </summary>
-    /// <typeparam name="TInput"></typeparam>
-    /// <typeparam name="TOutput"></typeparam>
-    public interface IAsyncCluster<TInput, TOutput> : IExposeMetrics, IDisposable
-    {
         /// <summary>
         /// Dispatch an item to the cluster and wait for the result
         /// </summary>
@@ -46,14 +33,22 @@ namespace GrandCentralDispatch.Clusters
         Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Stop the processing for the cluster.
+        /// Execute an item to the cluster instantly
         /// </summary>
-        void Stop();
+        /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+        /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        /// <returns><see cref="TOutput"/></returns>
+        Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Resume the processing for the cluster.
+        /// Dispatch an item to the cluster and wait for the result
         /// </summary>
-        void Resume();
+        /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+        /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        /// <returns><see cref="TOutput"/></returns>
+        Task<TOutput> DispatchAsync(TInput item, CancellationToken cancellationToken);
 
         /// <summary>
         /// <see cref="ClusterMetrics"/>

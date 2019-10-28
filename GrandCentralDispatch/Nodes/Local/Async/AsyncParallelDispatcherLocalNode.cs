@@ -2,21 +2,22 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Dasync.Collections;
 using Microsoft.Extensions.Logging;
 using Polly;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Options;
 using GrandCentralDispatch.Processors.Async;
 
-namespace GrandCentralDispatch.Nodes.Async
+namespace GrandCentralDispatch.Nodes.Local.Async
 {
     /// <summary>
-    /// Node which process items sequentially.
+    /// Node which process items in parallel.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class AsyncSequentialDispatcherNode<TInput, TOutput> : AsyncParallelProcessor<TInput, TOutput>,
-        IAsyncDispatcherNode<TInput, TOutput>
+    internal sealed class AsyncParallelDispatcherLocalNode<TInput, TOutput> : AsyncParallelProcessor<TInput, TOutput, AsyncPredicateItem<TInput, TOutput>>,
+        IAsyncDispatcherQueueLocalNode<TInput, TOutput>
     {
         /// <summary>
         /// <see cref="ILogger"/>
@@ -39,14 +40,14 @@ namespace GrandCentralDispatch.Nodes.Async
         private long _processedItems;
 
         /// <summary>
-        /// <see cref="AsyncSequentialDispatcherNode{TInput,TOutput}"/>
+        /// <see cref="AsyncParallelDispatcherLocalNode{TInput,TOutput}"/>
         /// </summary>
         /// <param name="progress">Progress of the current bulk</param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="logger"><see cref="ILogger"/></param>
-        public AsyncSequentialDispatcherNode(
+        public AsyncParallelDispatcherLocalNode(
             IProgress<double> progress,
             CancellationTokenSource cts,
             CircuitBreakerOptions circuitBreakerOptions,
@@ -85,11 +86,11 @@ namespace GrandCentralDispatch.Nodes.Async
         /// <param name="progress">Progress of the current bulk</param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
-        protected override async Task Process(IList<AsyncItem<TInput, TOutput>> bulk, IProgress<double> progress,
+        protected override async Task Process(IList<AsyncPredicateItem<TInput, TOutput>> bulk, IProgress<double> progress,
             CancellationToken cancellationToken)
         {
             var currentProgress = 0;
-            foreach (var item in bulk)
+            await bulk.ParallelForEachAsync(async item =>
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
@@ -117,7 +118,7 @@ namespace GrandCentralDispatch.Nodes.Async
                         }
 
                         var result = await item.Selector(item.Item);
-                        item.TaskCompletionSource.SetResult(result);
+                        item.TaskCompletionSource.TrySetResult(result);
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -127,7 +128,7 @@ namespace GrandCentralDispatch.Nodes.Async
                     finally
                     {
                         Interlocked.Increment(ref _processedItems);
-                        currentProgress++;
+                        Interlocked.Increment(ref currentProgress);
                         progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
@@ -140,7 +141,7 @@ namespace GrandCentralDispatch.Nodes.Async
                             ? $"Could not process item: {policyResult.FinalException.Message}."
                             : "An error has occured while processing the item.");
                 }
-            }
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -154,7 +155,7 @@ namespace GrandCentralDispatch.Nodes.Async
         public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await AddAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
+            return await AddAsync(new AsyncPredicateItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
         }
 
         /// <summary>

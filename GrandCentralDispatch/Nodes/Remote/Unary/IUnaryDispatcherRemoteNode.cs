@@ -1,13 +1,13 @@
 ﻿using System;
 using GrandCentralDispatch.Models;
 
-namespace GrandCentralDispatch.Nodes.Unary
+namespace GrandCentralDispatch.Nodes.Remote.Unary
 {
     /// <summary>
     /// Node which process items.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
-    internal interface IUnaryDispatcherNode<in TInput> : IDisposable
+    internal interface IUnaryDispatcherRemoteNode<in TInput> : IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="TInput"/> to the node.

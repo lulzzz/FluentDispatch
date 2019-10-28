@@ -14,7 +14,6 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using GrandCentralDispatch.Cache;
 using GrandCentralDispatch.Options;
-using GrandCentralDispatch.Extensions;
 using GrandCentralDispatch.Hubs.Hub;
 using GrandCentralDispatch.Hubs.Receiver;
 using GrandCentralDispatch.Models;
@@ -22,7 +21,7 @@ using GrandCentralDispatch.Processors.Dual;
 using GrandCentralDispatch.Remote;
 using Dasync.Collections;
 
-namespace GrandCentralDispatch.Nodes.Dual
+namespace GrandCentralDispatch.Nodes.Remote.Dual
 {
     /// <summary>
     /// Node which process items in parallel.
@@ -31,24 +30,14 @@ namespace GrandCentralDispatch.Nodes.Dual
     /// <typeparam name="TInput2">Item to be processed</typeparam>
     /// <typeparam name="TOutput1">Item to be processed</typeparam>
     /// <typeparam name="TOutput2">Item to be processed</typeparam>
-    internal sealed class DualParallelDispatcherNode<TInput1, TInput2, TOutput1, TOutput2> :
+    internal sealed class DualParallelDispatcherRemoteNode<TInput1, TInput2, TOutput1, TOutput2> :
         DualParallelProcessor<TInput1, TInput2>,
-        IDualDispatcherNode<TInput1, TInput2>
+        IDualDispatcherRemoteNode<TInput1, TInput2>
     {
         /// <summary>
         /// <see cref="ILogger"/>
         /// </summary>
         private readonly ILogger _logger;
-
-        /// <summary>
-        /// The <see cref="Task"/> to be applied to an item <see cref="TInput1"/> which produces a <see cref="TOutput1"/>.
-        /// </summary>
-        private readonly Func<TInput1, NodeMetrics, CancellationToken, Task<TOutput1>> _item1Resolver;
-
-        /// <summary>
-        /// The <see cref="Task"/> to be applied to an item <see cref="TInput2"/> which produces a <see cref="TOutput2"/>.
-        /// </summary>
-        private readonly Func<TInput2, NodeMetrics, CancellationToken, Task<TOutput2>> _item2Resolver;
 
         /// <summary>
         /// <see cref="IRemoteContract{TInput1,TOutput2}"/>
@@ -130,53 +119,23 @@ namespace GrandCentralDispatch.Nodes.Dual
         private long _executorProcessedItems;
 
         /// <summary>
-        /// <see cref="DualParallelDispatcherNode{TInput1,TInput2,TOutput1,TOutput2}"/>
+        /// <see cref="DualParallelDispatcherRemoteNode{TInput1,TInput2,TOutput1,TOutput2}"/>
         /// </summary>
         /// <param name="persistentCache">Persistent cache to avoid dropped data on system crash</param>
         /// <param name="progress">Progress of the current bulk</param>
+        /// <param name="host"><see cref="Host"/></param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="logger"><see cref="ILogger"/></param>
-        /// <param name="host"><see cref="Host"/></param>
-        public DualParallelDispatcherNode(
+        public DualParallelDispatcherRemoteNode(
             IAppCache persistentCache,
             IProgress<double> progress,
+            Host host,
             CancellationTokenSource cts,
             CircuitBreakerOptions circuitBreakerOptions,
             ClusterOptions clusterOptions,
-            ILogger logger,
-            Host host = null) : this(persistentCache, null, null, null, progress, cts, circuitBreakerOptions,
-            clusterOptions, logger,
-            host)
-        {
-
-        }
-
-        /// <summary>
-        /// <see cref="DualParallelDispatcherNode{TInput1,TInput2,TOutput1,TOutput2}"/>
-        /// </summary>
-        /// <param name="persistentCache">Persistent cache to avoid dropped data on system crash</param>
-        /// <param name="item1Resolver">The <see cref="Task"/> to be applied to an item</param>
-        /// <param name="item2Resolver">The <see cref="Task"/> to be applied to an item</param>
-        /// <param name="resolver">The <see cref="Task"/> to be applied to an item</param>
-        /// <param name="progress">Progress of the current bulk</param>
-        /// <param name="cts"><see cref="CancellationTokenSource"/></param>
-        /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
-        /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
-        /// <param name="logger"><see cref="ILogger"/></param>
-        /// <param name="host"><see cref="Host"/></param>
-        public DualParallelDispatcherNode(
-            IAppCache persistentCache,
-            Func<TInput1, NodeMetrics, CancellationToken, Task<TOutput1>> item1Resolver,
-            Func<TInput2, NodeMetrics, CancellationToken, Task<TOutput2>> item2Resolver,
-            Func<TOutput1, TOutput2, NodeMetrics, CancellationToken, Task> resolver,
-            IProgress<double> progress,
-            CancellationTokenSource cts,
-            CircuitBreakerOptions circuitBreakerOptions,
-            ClusterOptions clusterOptions,
-            ILogger logger,
-            Host host = null) : base(
+            ILogger logger) : base(
             Policy.Handle<Exception>()
                 .AdvancedCircuitBreakerAsync(circuitBreakerOptions.CircuitBreakerFailureThreshold,
                     circuitBreakerOptions.CircuitBreakerSamplingDuration,
@@ -198,10 +157,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                             "Batch processor breaker: Half-open, next call is a trial.");
                     }), clusterOptions, progress, cts, logger)
         {
-            var persistentCache1 = persistentCache;
             _logger = logger;
-            _item1Resolver = item1Resolver;
-            _item2Resolver = item2Resolver;
             _clusterOptions = clusterOptions;
 
             ISubject<LinkedItem<TInput1>> item1DispatcherSubject = new Subject<LinkedItem<TInput1>>();
@@ -210,7 +166,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)))
                 .Select(item =>
                 {
-                    return Observable.FromAsync(() => persistentCache1.AddItem1Async(item.Key.ToString(), item.Entity,
+                    return Observable.FromAsync(() => persistentCache.AddItem1Async(item.Key.ToString(), item.Entity,
                         item.CancellationTokenSource.Token));
                 })
                 .Merge()
@@ -222,27 +178,24 @@ namespace GrandCentralDispatch.Nodes.Dual
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)))
                 .Select(item =>
                 {
-                    return Observable.FromAsync(() => persistentCache1.AddItem2Async(item.Key.ToString(), item.Entity,
+                    return Observable.FromAsync(() => persistentCache.AddItem2Async(item.Key.ToString(), item.Entity,
                         item.CancellationTokenSource.Token));
                 })
                 .Merge()
                 .Subscribe();
 
-            if (_clusterOptions.ExecuteRemotely && host != null)
-            {
-                var channel = new Channel(host.MachineName, host.Port,
-                    ChannelCredentials.Insecure);
-                _remoteContract = MagicOnionClient.Create<IRemoteContract<TOutput1, TOutput2>>(channel);
-                _item1RemoteContract = MagicOnionClient.Create<IOutputItem1RemoteContract<TInput1, TOutput1>>(channel);
-                _item2RemoteContract = MagicOnionClient.Create<IOutputItem2RemoteContract<TInput2, TOutput2>>(channel);
-                IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
-                _remoteNodeHealthSubscription =
-                    nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
-                    {
-                        NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
-                    });
-                _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
-            }
+            var channel = new Channel(host.MachineName, host.Port,
+                ChannelCredentials.Insecure);
+            _remoteContract = MagicOnionClient.Create<IRemoteContract<TOutput1, TOutput2>>(channel);
+            _item1RemoteContract = MagicOnionClient.Create<IOutputItem1RemoteContract<TInput1, TOutput1>>(channel);
+            _item2RemoteContract = MagicOnionClient.Create<IOutputItem2RemoteContract<TInput2, TOutput2>>(channel);
+            IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
+            _remoteNodeHealthSubscription =
+                nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
+                {
+                    NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
+                });
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
 
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
 
@@ -314,15 +267,7 @@ namespace GrandCentralDispatch.Nodes.Dual
                                 item1ProcessSource.TryGetValue(combined.Item1.Key, out var item1) &&
                                 item2ProcessSource.TryGetValue(combined.Item2.Key, out var item2))
                             {
-                                if (_clusterOptions.ExecuteRemotely)
-                                {
-                                    await _remoteContract.ProcessRemotely(item1, item2, NodeMetrics);
-                                }
-                                else
-                                {
-                                    await resolver(item1, item2, NodeMetrics, ct);
-                                }
-
+                                await _remoteContract.ProcessRemotely(item1, item2, NodeMetrics);
                                 combined.Item1.Value.Cancel();
                                 combined.Item2.Value.Cancel();
                             }
@@ -406,18 +351,9 @@ namespace GrandCentralDispatch.Nodes.Dual
                             _item1SynchronizedDispatcherSubject.OnNext(item);
                         }
 
-                        if (_clusterOptions.ExecuteRemotely)
-                        {
-                            _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1RemoteContract.ProcessItem1Remotely(item.Entity, NodeMetrics),
-                                item.CancellationTokenSource));
-                        }
-                        else
-                        {
-                            _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1Resolver(item.Entity, NodeMetrics, ct).WrapTaskForCancellation(ct),
-                                item.CancellationTokenSource));
-                        }
+                        _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
+                             await _item1RemoteContract.ProcessItem1Remotely(item.Entity, NodeMetrics),
+                             item.CancellationTokenSource));
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -483,18 +419,9 @@ namespace GrandCentralDispatch.Nodes.Dual
                             _item2SynchronizedDispatcherSubject.OnNext(item);
                         }
 
-                        if (_clusterOptions.ExecuteRemotely)
-                        {
-                            _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2RemoteContract.ProcessItem2Remotely(item.Entity, NodeMetrics),
-                                item.CancellationTokenSource));
-                        }
-                        else
-                        {
-                            _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2Resolver(item.Entity, NodeMetrics, ct).WrapTaskForCancellation(ct),
-                                item.CancellationTokenSource));
-                        }
+                        _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
+                            await _item2RemoteContract.ProcessItem2Remotely(item.Entity, NodeMetrics),
+                            item.CancellationTokenSource));
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -562,18 +489,9 @@ namespace GrandCentralDispatch.Nodes.Dual
                                 item.CancellationTokenSource));
                         }
 
-                        if (_clusterOptions.ExecuteRemotely)
-                        {
-                            _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1RemoteContract.ProcessItem1Remotely(entity, NodeMetrics),
-                                item.CancellationTokenSource));
-                        }
-                        else
-                        {
-                            _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                                await _item1Resolver(entity, NodeMetrics, ct).WrapTaskForCancellation(ct),
-                                item.CancellationTokenSource));
-                        }
+                        _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
+                            await _item1RemoteContract.ProcessItem1Remotely(entity, NodeMetrics),
+                            item.CancellationTokenSource));
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -641,18 +559,9 @@ namespace GrandCentralDispatch.Nodes.Dual
                                 item.CancellationTokenSource));
                         }
 
-                        if (_clusterOptions.ExecuteRemotely)
-                        {
-                            _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2RemoteContract.ProcessItem2Remotely(entity, NodeMetrics),
-                                item.CancellationTokenSource));
-                        }
-                        else
-                        {
-                            _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
-                                await _item2Resolver(entity, NodeMetrics, ct).WrapTaskForCancellation(ct),
-                                item.CancellationTokenSource));
-                        }
+                        _item2Source.Post(new Tuple<Guid, TOutput2, CancellationTokenSource>(item.Key,
+                               await _item2RemoteContract.ProcessItem2Remotely(entity, NodeMetrics),
+                               item.CancellationTokenSource));
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -729,20 +638,17 @@ namespace GrandCentralDispatch.Nodes.Dual
             NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) + Interlocked.Exchange(ref _executorProcessedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
-            if (_clusterOptions.ExecuteRemotely)
+            try
             {
-                try
-                {
-                    if (_nodeHub == null) return;
-                    await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
-                    NodeMetrics.Alive = true;
-                    _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
-                }
-                catch (Exception ex)
-                {
-                    NodeMetrics.Alive = false;
-                    _logger.LogWarning(ex.Message);
-                }
+                if (_nodeHub == null) return;
+                await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
+                NodeMetrics.Alive = true;
+                _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
+            }
+            catch (Exception ex)
+            {
+                NodeMetrics.Alive = false;
+                _logger.LogWarning(ex.Message);
             }
 
             NodeMetrics.RefreshSubject.OnNext(NodeMetrics.Id);

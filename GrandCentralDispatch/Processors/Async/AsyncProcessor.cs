@@ -7,24 +7,27 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using GrandCentralDispatch.Options;
+using GrandCentralDispatch.Models;
+using System.Threading.Tasks;
 
-namespace GrandCentralDispatch.Processors.Remote
+namespace GrandCentralDispatch.Processors.Async
 {
     /// <summary>
     /// Processor which executes asynchronously incoming items.
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
     /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-    internal abstract class RemoteProcessor<TInput, TOutput> : RemoteAbstractProcessor<TInput, TOutput>
+    /// <typeparam name="T"><see cref="T"/></typeparam>
+    internal abstract class AsyncProcessor<TInput, TOutput, T> : AsyncAbstractProcessor<TInput, TOutput, T> where T : AsyncItem<TInput, TOutput>
     {
         /// <summary>
-        /// <see cref="RemoteProcessor{TInput,TOutput}"/>
+        /// <see cref="AsyncProcessor{TInput,TOutput,T}"/>
         /// </summary>
         /// <param name="circuitBreakerPolicy"><see cref="CircuitBreakerPolicy"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="logger"><see cref="ILogger"/></param>
-        protected RemoteProcessor(AsyncCircuitBreakerPolicy circuitBreakerPolicy,
+        protected AsyncProcessor(AsyncCircuitBreakerPolicy circuitBreakerPolicy,
             ClusterOptions clusterOptions,
             CancellationTokenSource cts,
             ILogger logger) : base(circuitBreakerPolicy, clusterOptions, logger)
@@ -56,5 +59,30 @@ namespace GrandCentralDispatch.Processors.Remote
                 },
                     ex => Logger.LogError(ex.Message));
         }
+
+        /// <summary>
+        /// Process an incoming item
+        /// </summary>
+        /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="item"><see cref="AsyncItem{TInput,TOutput}"/></param>
+        public Task<TOutput> ProcessAsync(T item)
+        {
+            Interlocked.Increment(ref _totalItemsProcessed);
+            SynchronizedItemsSubject.OnNext(item);
+            item.CancellationToken.Register(() =>
+            {
+                item.TaskCompletionSource.TrySetCanceled();
+            });
+
+            return item.TaskCompletionSource.Task;
+        }
+
+        /// <summary>
+        /// The bulk processor.
+        /// </summary>
+        /// <param name="item"><see cref="TInput"/> to process</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        /// <returns><see cref="Task"/></returns>
+        protected abstract Task Process(T item, CancellationToken cancellationToken);
     }
 }

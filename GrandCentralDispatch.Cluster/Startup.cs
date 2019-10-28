@@ -43,7 +43,7 @@ namespace GrandCentralDispatch.Cluster
                     {
                         var hosts = Configuration.GetSection("GCD_CLUSTER_NODES")
                             .GetChildren()
-                            .Select(x => new Models.Host(x.GetValue<string>("MachineName"),
+                            .Select(x => new Host(x.GetValue<string>("MachineName"),
                                 x.GetValue<int>("Port")))
                             .ToHashSet();
                         clusterOptions.Hosts = hosts;
@@ -51,7 +51,6 @@ namespace GrandCentralDispatch.Cluster
 
                     clusterOptions.ExecuteRemotely = true;
                     clusterOptions.NodeQueuingStrategy = NodeQueuingStrategy.Healthiest;
-                    clusterOptions.PersistenceEnabled = true;
                 },
                 circuitBreakerOptions => { });
 
@@ -61,7 +60,7 @@ namespace GrandCentralDispatch.Cluster
                 sp => new UriResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IHttpClientFactory>()),
                 sp => new RequestResolver(sp.GetService<ILoggerFactory>()));
 
-            services.AddRemoteCluster<string, string>();
+            services.AddAsyncCluster<string, string>(sp => new HeaderResolver(sp.GetService<ILoggerFactory>()));
 
             services.AddControllers().AddMonitoringMetrics();
         }

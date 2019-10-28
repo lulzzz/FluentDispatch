@@ -3,17 +3,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Models;
 
-namespace GrandCentralDispatch.Nodes.Remote
+namespace GrandCentralDispatch.Nodes.Remote.Async
 {
     /// <summary>
     /// Node which process items.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal interface IRemoteNode<TInput, TOutput> : IDisposable
+    internal interface IAsyncDispatcherRemoteNode<TInput, TOutput> : IDisposable
     {
         /// <summary>
-        /// Execute a <see cref="Func{TInput}"/> against a remote the node.
+        /// Dispatch a <see cref="Func{TInput}"/> to the node.
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>

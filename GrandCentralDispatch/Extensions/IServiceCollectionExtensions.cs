@@ -28,25 +28,16 @@ namespace GrandCentralDispatch.Extensions
         }
 
         /// <summary>
-        /// Add <see cref="IRemoteCluster{TInput, TOutput}"/> to <see cref="IServiceCollection"/>
-        /// </summary>
-        /// <typeparam name="TInput"></typeparam>
-        /// <typeparam name="TOutput"></typeparam>
-        /// <param name="services"><see cref="IServiceCollection"/></param>
-        public static void AddRemoteCluster<TInput, TOutput>(this IServiceCollection services)
-        {
-            services.TryAddSingleton<IRemoteCluster<TInput, TOutput>, RemoteCluster<TInput, TOutput>>();
-            services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<IRemoteCluster<TInput, TOutput>>());
-        }
-
-        /// <summary>
         /// Add <see cref="IAsyncCluster{TInput,TOutput}"/> to <see cref="IServiceCollection"/>
         /// </summary>
         /// <typeparam name="TInput"></typeparam>
         /// <typeparam name="TOutput"></typeparam>
+        /// <param name="resolver"><see cref="Resolver{T}"/></param>
         /// <param name="services"><see cref="IServiceCollection"/></param>
-        public static void AddAsyncCluster<TInput, TOutput>(this IServiceCollection services)
+        public static void AddAsyncCluster<TInput, TOutput>(this IServiceCollection services,
+                        Func<IServiceProvider, RemoteResolver<TInput, TOutput>> resolver)
         {
+            services.TryAddSingleton(resolver);
             services.TryAddSingleton<IAsyncCluster<TInput, TOutput>, AsyncCluster<TInput, TOutput>>();
             services.TryAddSingleton<IExposeMetrics>(sp => sp.GetRequiredService<IAsyncCluster<TInput, TOutput>>());
         }

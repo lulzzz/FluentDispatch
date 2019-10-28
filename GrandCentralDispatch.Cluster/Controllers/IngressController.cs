@@ -13,14 +13,14 @@ namespace GrandCentralDispatch.Cluster.Controllers
     public class IngressController : ControllerBase
     {
         private readonly ICluster<Payload, Uri> _cluster;
-        private readonly IRemoteCluster<string, string> _remoteCluster;
+        private readonly IAsyncCluster<string, string> _remoteCluster;
 
         /// <summary>
         /// <see cref="ICluster{T}"/>
         /// </summary>
         /// <param name="cluster"></param>
         /// <param name="remoteCluster"></param>
-        public IngressController(ICluster<Payload, Uri> cluster, IRemoteCluster<string, string> remoteCluster)
+        public IngressController(ICluster<Payload, Uri> cluster, IAsyncCluster<string, string> remoteCluster)
         {
             _cluster = cluster;
             _remoteCluster = remoteCluster;

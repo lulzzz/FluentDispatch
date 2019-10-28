@@ -11,33 +11,26 @@ using MagicOnion.Client;
 using Microsoft.Extensions.Logging;
 using Polly;
 using GrandCentralDispatch.Cache;
-using GrandCentralDispatch.Options;
-using GrandCentralDispatch.Extensions;
 using GrandCentralDispatch.Hubs.Hub;
 using GrandCentralDispatch.Hubs.Receiver;
 using GrandCentralDispatch.Models;
+using GrandCentralDispatch.Options;
 using GrandCentralDispatch.Processors.Unary;
 using GrandCentralDispatch.Remote;
-using Dasync.Collections;
 
-namespace GrandCentralDispatch.Nodes.Unary
+namespace GrandCentralDispatch.Nodes.Remote.Unary
 {
     /// <summary>
-    /// Node which process items in parallel.
+    /// Node which process items sequentially.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
-    internal sealed class UnaryParallelDispatcherNode<TInput> : UnaryParallelProcessor<TInput>,
-        IUnaryDispatcherNode<TInput>
+    internal sealed class UnarySequentialDispatcherRemoteNode<TInput> : UnarySequentialProcessor<TInput>,
+        IUnaryDispatcherRemoteNode<TInput>
     {
         /// <summary>
         /// <see cref="ILogger"/>
         /// </summary>
         private readonly ILogger _logger;
-
-        /// <summary>
-        /// The <see cref="Task"/> to be applied to an item.
-        /// </summary>
-        private readonly Func<TInput, NodeMetrics, CancellationToken, Task> _process;
 
         /// <summary>
         /// <see cref="IRemoteContract{TInput}"/>
@@ -75,35 +68,33 @@ namespace GrandCentralDispatch.Nodes.Unary
         private bool _disposed;
 
         /// <summary>
-        /// Number of currently processed items for the current bulk
+        /// Number of processed items for the current bulk
         /// </summary>
         private long _processedItems;
 
         /// <summary>
-        /// Number of currently processed item executors for the current bulk
+        /// Number of processed item executors for the current bulk
         /// </summary>
         private long _executorProcessedItems;
 
         /// <summary>
-        /// <see cref="UnaryParallelDispatcherNode{TInput}"/>
+        /// <see cref="UnarySequentialDispatcherRemoteNode{TInput}"/>
         /// </summary>
         /// <param name="persistentCache">Persistent cache to avoid dropped data on system crash</param>
-        /// <param name="process">The <see cref="Task"/> to be applied to an item</param>
         /// <param name="progress">Progress of the current bulk</param>
+        /// <param name="host"><see cref="Host"/></param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="logger"><see cref="ILogger"/></param>
-        /// <param name="host"><see cref="Host"/></param>
-        public UnaryParallelDispatcherNode(
+        public UnarySequentialDispatcherRemoteNode(
             IAppCache persistentCache,
-            Func<TInput, NodeMetrics, CancellationToken, Task> process,
             IProgress<double> progress,
+            Host host,
             CancellationTokenSource cts,
             CircuitBreakerOptions circuitBreakerOptions,
             ClusterOptions clusterOptions,
-            ILogger logger,
-            Host host = null) : base(
+            ILogger logger) : base(
             Policy.Handle<Exception>()
                 .AdvancedCircuitBreakerAsync(circuitBreakerOptions.CircuitBreakerFailureThreshold,
                     circuitBreakerOptions.CircuitBreakerSamplingDuration,
@@ -126,7 +117,6 @@ namespace GrandCentralDispatch.Nodes.Unary
                     }), clusterOptions, progress, cts, logger)
         {
             _logger = logger;
-            _process = process;
             _clusterOptions = clusterOptions;
 
             ISubject<PersistentItem<TInput>> dispatcherSubject = new Subject<PersistentItem<TInput>>();
@@ -141,19 +131,16 @@ namespace GrandCentralDispatch.Nodes.Unary
                 .Merge()
                 .Subscribe();
 
-            if (_clusterOptions.ExecuteRemotely && host != null)
-            {
-                var channel = new Channel(host.MachineName, host.Port,
-                    ChannelCredentials.Insecure);
-                _remoteContract = MagicOnionClient.Create<IRemoteContract<TInput>>(channel);
-                IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
-                _remoteNodeHealthSubscription =
-                    nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
-                    {
-                        NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
-                    });
-                _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
-            }
+            var channel = new Channel(host.MachineName, host.Port,
+                ChannelCredentials.Insecure);
+            _remoteContract = MagicOnionClient.Create<IRemoteContract<TInput>>(channel);
+            IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
+            _remoteNodeHealthSubscription =
+                nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
+                {
+                    NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
+                });
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
 
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
         }
@@ -169,7 +156,7 @@ namespace GrandCentralDispatch.Nodes.Unary
             CancellationToken cancellationToken)
         {
             var currentProgress = 0;
-            await bulk.ParallelForEachAsync(async item =>
+            foreach (var item in bulk)
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
@@ -202,15 +189,7 @@ namespace GrandCentralDispatch.Nodes.Unary
                             _synchronizedDispatcherSubject.OnNext(persistentItem);
                         }
 
-                        if (_clusterOptions.ExecuteRemotely)
-                        {
-                            await _remoteContract.ProcessRemotely(item, NodeMetrics);
-                        }
-                        else
-                        {
-                            await _process(item, NodeMetrics, ct).WrapTaskForCancellation(ct);
-                        }
-
+                        await _remoteContract.ProcessRemotely(item, NodeMetrics);
                         persistentItem.CancellationTokenSource.Cancel();
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
@@ -220,7 +199,7 @@ namespace GrandCentralDispatch.Nodes.Unary
                     finally
                     {
                         Interlocked.Increment(ref _processedItems);
-                        Interlocked.Increment(ref currentProgress);
+                        currentProgress++;
                         progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
@@ -232,7 +211,7 @@ namespace GrandCentralDispatch.Nodes.Unary
                             ? $"Could not process item: {policyResult.FinalException.Message}."
                             : "An error has occured while processing the item.");
                 }
-            }, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -246,7 +225,7 @@ namespace GrandCentralDispatch.Nodes.Unary
             CancellationToken cancellationToken)
         {
             var currentProgress = 0;
-            await bulk.ParallelForEachAsync(async item =>
+            foreach (var item in bulk)
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
@@ -280,15 +259,7 @@ namespace GrandCentralDispatch.Nodes.Unary
                             _synchronizedDispatcherSubject.OnNext(persistentItem);
                         }
 
-                        if (_clusterOptions.ExecuteRemotely)
-                        {
-                            await _remoteContract.ProcessRemotely(entity, NodeMetrics);
-                        }
-                        else
-                        {
-                            await _process(entity, NodeMetrics, ct).WrapTaskForCancellation(ct);
-                        }
-
+                        await _remoteContract.ProcessRemotely(entity, NodeMetrics);
                         persistentItem.CancellationTokenSource.Cancel();
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
@@ -298,7 +269,7 @@ namespace GrandCentralDispatch.Nodes.Unary
                     finally
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
-                        Interlocked.Increment(ref currentProgress);
+                        currentProgress++;
                         progress.Report(currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
@@ -310,7 +281,7 @@ namespace GrandCentralDispatch.Nodes.Unary
                             ? $"Could not process item: {policyResult.FinalException.Message}."
                             : "An error has occured while processing the item.");
                 }
-            }, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -348,20 +319,17 @@ namespace GrandCentralDispatch.Nodes.Unary
             NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) + Interlocked.Exchange(ref _executorProcessedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
-            if (_clusterOptions.ExecuteRemotely)
+            try
             {
-                try
-                {
-                    if (_nodeHub == null) return;
-                    await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
-                    NodeMetrics.Alive = true;
-                    _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
-                }
-                catch (Exception ex)
-                {
-                    NodeMetrics.Alive = false;
-                    _logger.LogWarning(ex.Message);
-                }
+                if (_nodeHub == null) return;
+                await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
+                NodeMetrics.Alive = true;
+                _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
+            }
+            catch (Exception ex)
+            {
+                NodeMetrics.Alive = false;
+                _logger.LogWarning(ex.Message);
             }
 
             NodeMetrics.RefreshSubject.OnNext(NodeMetrics.Id);

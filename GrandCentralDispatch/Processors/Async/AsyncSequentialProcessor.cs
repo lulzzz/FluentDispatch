@@ -8,6 +8,9 @@ using Polly;
 using Polly.CircuitBreaker;
 using GrandCentralDispatch.Extensions;
 using GrandCentralDispatch.Options;
+using GrandCentralDispatch.Models;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace GrandCentralDispatch.Processors.Async
 {
@@ -16,10 +19,10 @@ namespace GrandCentralDispatch.Processors.Async
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
     /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-    internal abstract class AsyncSequentialProcessor<TInput, TOutput> : AsyncAbstractProcessor<TInput, TOutput>
+    internal abstract class AsyncSequentialProcessor<TInput, TOutput, T> : AsyncAbstractQueueProcessor<TInput, TOutput, T> where T : AsyncItem<TInput, TOutput>
     {
         /// <summary>
-        /// <see cref="AsyncSequentialProcessor{TInput,TOutput}"/>
+        /// <see cref="AsyncSequentialProcessor{TInput,TOutput,T}"/>
         /// </summary>
         /// <param name="circuitBreakerPolicy"><see cref="CircuitBreakerPolicy"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
@@ -37,7 +40,7 @@ namespace GrandCentralDispatch.Processors.Async
             // Then we process items asynchronously, with a circuit breaker policy
             ItemsSubjectSubscription = SynchronizedItemsSubject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
-                    {IsBackground = true, Priority = ThreadPriority}))
+                { IsBackground = true, Priority = ThreadPriority }))
                 .Limit(() => ClusterOptions.NodeThrottling,
                     ClusterOptions.Window,
                     TaskPoolScheduler.Default,
@@ -68,5 +71,31 @@ namespace GrandCentralDispatch.Processors.Async
                     },
                     ex => Logger.LogError(ex.Message));
         }
+
+        /// <summary>
+        /// Push a new item to the queue.
+        /// </summary>
+        /// <param name="item"><see cref="AsyncPredicateItem{TInput,TOutput}"/></param>
+        public Task<TOutput> AddAsync(T item)
+        {
+            Interlocked.Increment(ref _totalItemsProcessed);
+            SynchronizedItemsSubject.OnNext(item);
+            item.CancellationToken.Register(() =>
+            {
+                item.TaskCompletionSource.TrySetCanceled();
+            });
+
+            return item.TaskCompletionSource.Task;
+        }
+
+        /// <summary>
+        /// The bulk processor.
+        /// </summary>
+        /// <param name="bulk">Bulk of <see cref="TInput"/> to process</param>
+        /// <param name="progress">Progress of the current bulk</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        /// <returns><see cref="Task"/></returns>
+        protected abstract Task Process(IList<T> bulk, IProgress<double> progress,
+            CancellationToken cancellationToken);
     }
 }

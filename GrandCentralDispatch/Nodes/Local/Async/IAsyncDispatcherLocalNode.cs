@@ -3,14 +3,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Models;
 
-namespace GrandCentralDispatch.Nodes.Async
+namespace GrandCentralDispatch.Nodes.Local.Async
 {
     /// <summary>
     /// Node which process items.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal interface IAsyncDispatcherNode<TInput, TOutput> : IDisposable
+    internal interface IAsyncDispatcherLocalNode<TInput, TOutput> : IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="Func{TInput}"/> to the node.
@@ -20,7 +20,7 @@ namespace GrandCentralDispatch.Nodes.Async
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
+        Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
 
         /// <summary>
         /// <see cref="NodeMetrics"/>
