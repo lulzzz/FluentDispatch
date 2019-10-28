@@ -132,7 +132,7 @@ namespace GrandCentralDispatch.Clusters
         }
 
         /// <summary>
-        /// Dispatch an item to the cluster and wait for the remotely computed result
+        /// Execute an item to the cluster instantly
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>

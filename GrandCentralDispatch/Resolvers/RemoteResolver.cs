@@ -155,6 +155,49 @@ namespace GrandCentralDispatch.Resolvers
     }
 
     /// <summary>
+    /// Resolve the processing function which will be applied to each <see cref="TInput"/>
+    /// </summary>
+    /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
+    /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+    public abstract class RemoteFuncResolver<TInput, TOutput> :
+        ServiceBase<IOutputRemoteContract<TInput, TOutput>>,
+        IOutputRemoteContract<TInput, TOutput>
+    {
+        /// <summary>
+        /// Retrieve the processing function
+        /// </summary>
+        /// <returns><see cref="Func{TResult}"/></returns>
+        public abstract Func<TInput, NodeMetrics, UnaryResult<TOutput>> GetRemoteFunc();
+
+        /// <summary>
+        /// Override this method to apply a specific process to each incoming item remotely
+        /// </summary>
+        /// <param name="item"><see cref="TInput"/></param>
+        /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
+        public virtual UnaryResult<TOutput> ProcessRemotely(TInput item, NodeMetrics nodeMetrics)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Generic resolver which enable overriding the default behavior for each incoming new item
+    /// </summary>
+    /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
+    /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+    public class RemoteResolver<TInput, TOutput> : RemoteFuncResolver<TInput, TOutput>
+    {
+        /// <summary>
+        /// Resolve <see cref="GetRemoteFunc"/>
+        /// </summary>
+        /// <returns><see cref="Func{TResult}"/></returns>
+        public override Func<TInput, NodeMetrics, UnaryResult<TOutput>> GetRemoteFunc()
+        {
+            return ProcessRemotely;
+        }
+    }
+
+    /// <summary>
     /// Generic resolver which enable overriding the default behavior for each incoming new item
     /// </summary>
     /// <typeparam name="TOutput1"><see cref="TOutput1"/></typeparam>

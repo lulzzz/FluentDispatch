@@ -100,7 +100,7 @@ namespace GrandCentralDispatch.Extensions
         /// <param name="item1Resolver"><see cref="Resolver{TInput1}"/></param>
         /// <param name="item2Resolver"><see cref="Resolver{TInput2}"/></param>
         /// <param name="finalResolver"><see cref="Resolver{TOutput1}"/></param>
-        public static void AddRemoteCluster<TInput1, TInput2, TOutput1, TOutput2>(this IServiceCollection services,
+        public static void AddCluster<TInput1, TInput2, TOutput1, TOutput2>(this IServiceCollection services,
             Func<IServiceProvider, Item1RemoteFuncPartialResolver<TInput1, TOutput1>> item1Resolver,
             Func<IServiceProvider, Item2RemoteFuncPartialResolver<TInput2, TOutput2>> item2Resolver,
             Func<IServiceProvider, DualFuncRemoteResolver<TOutput1, TOutput2>> finalResolver)

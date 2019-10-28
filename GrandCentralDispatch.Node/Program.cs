@@ -71,6 +71,7 @@ namespace GrandCentralDispatch.Node
                         typeof(Contract.Resolvers.PayloadResolver),
                         typeof(Contract.Resolvers.UriResolver),
                         typeof(Contract.Resolvers.RequestResolver),
+                        typeof(Contract.Resolvers.HeaderResolver),
                         typeof(Hubs.Hub.NodeHub)
                     });
         }

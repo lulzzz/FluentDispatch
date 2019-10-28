@@ -24,7 +24,7 @@ namespace GrandCentralDispatch.Contract.Resolvers
         /// </summary>
         /// <param name="item"><see cref="Uri"/></param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
-        /// <returns><see cref="UnaryResult{string}"/></returns>
+        /// <returns><see cref="UnaryResult{TResult}"/></returns>
         public override async UnaryResult<string> ProcessItem2Remotely(Uri item,
             NodeMetrics nodeMetrics)
         {

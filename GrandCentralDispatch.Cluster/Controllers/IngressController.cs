@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using GrandCentralDispatch.Clusters;
 using GrandCentralDispatch.Contract.Models;
@@ -9,15 +12,18 @@ namespace GrandCentralDispatch.Cluster.Controllers
     [ApiController]
     public class IngressController : ControllerBase
     {
-        private readonly ICluster<Payload, Uri> _requestCluster;
+        private readonly ICluster<Payload, Uri> _cluster;
+        private readonly IRemoteCluster<string, string> _remoteCluster;
 
         /// <summary>
         /// <see cref="ICluster{T}"/>
         /// </summary>
-        /// <param name="requestCluster"></param>
-        public IngressController(ICluster<Payload, Uri> requestCluster)
+        /// <param name="cluster"></param>
+        /// <param name="remoteCluster"></param>
+        public IngressController(ICluster<Payload, Uri> cluster, IRemoteCluster<string, string> remoteCluster)
         {
-            _requestCluster = requestCluster;
+            _cluster = cluster;
+            _remoteCluster = remoteCluster;
         }
 
         /// <summary>
@@ -26,19 +32,26 @@ namespace GrandCentralDispatch.Cluster.Controllers
         /// <param name="payload"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult Post([FromBody] Payload payload)
+        public async Task<IActionResult> Post([FromBody] Payload payload)
         {
             var requestIdentifier = Guid.NewGuid();
 
             // We dispatch the func to be executed on a dedicated thread, the Linq expression will not be computed on this thread
-            _requestCluster.Dispatch(requestIdentifier,
+            _cluster.Dispatch(requestIdentifier,
                 () => Uri.IsWellFormedUriString(payload.Body, UriKind.Absolute)
                     ? new Uri(payload.Body)
                     : throw new Exception());
 
             // We post directly the value because there is nothing to compute here
-            _requestCluster.Dispatch(requestIdentifier, payload);
-            return Ok();
+            _cluster.Dispatch(requestIdentifier, payload);
+
+            var headers = Request.Headers.ToList();
+            var computedResult = await _remoteCluster.ExecuteAsync(headers.Select(header =>
+            {
+                header.Deconstruct(out var key, out var value);
+                return $"{key}:{value}";
+            }).Aggregate((header1, header2) => string.Join(';', header1, header2)), CancellationToken.None);
+            return Ok(computedResult);
         }
     }
 }
