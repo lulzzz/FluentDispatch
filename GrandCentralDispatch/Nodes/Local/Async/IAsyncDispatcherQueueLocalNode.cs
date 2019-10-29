@@ -13,10 +13,10 @@ namespace GrandCentralDispatch.Nodes.Local.Async
     internal interface IAsyncDispatcherQueueLocalNode<TInput, TOutput> : IDisposable
     {
         /// <summary>
-        /// Dispatch a <see cref="Func{TInput}"/> to the node.
+        /// Dispatch a <see cref="Func{TInput}"/> to the local node using a selector predicate.
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-        /// <param name="selector"></param>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>

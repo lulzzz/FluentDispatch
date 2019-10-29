@@ -22,15 +22,15 @@ namespace GrandCentralDispatch.Remote
     }
 
     public interface
-    IOutputItem1RemoteContract<TInput, TOutput> : IService<
-        IOutputItem1RemoteContract<TInput, TOutput>>
+        IOutputItem1RemoteContract<TInput, TOutput> : IService<
+            IOutputItem1RemoteContract<TInput, TOutput>>
     {
         UnaryResult<TOutput> ProcessItem1Remotely(TInput item, NodeMetrics nodeMetrics);
     }
 
     public interface
-    IOutputItem2RemoteContract<TInput, TOutput> : IService<
-        IOutputItem2RemoteContract<TInput, TOutput>>
+        IOutputItem2RemoteContract<TInput, TOutput> : IService<
+            IOutputItem2RemoteContract<TInput, TOutput>>
     {
         UnaryResult<TOutput> ProcessItem2Remotely(TInput item, NodeMetrics nodeMetrics);
     }

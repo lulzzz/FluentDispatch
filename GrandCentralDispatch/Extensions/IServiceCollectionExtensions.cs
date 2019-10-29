@@ -14,7 +14,7 @@ namespace GrandCentralDispatch.Extensions
     public static class IServiceCollectionExtensions
     {
         /// <summary>
-        /// Configure <see cref="ICluster{TInput1}"/>
+        /// Configure <see cref="ICluster{TInput}"/>
         /// </summary>
         /// <param name="services"><see cref="IServiceCollection"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
@@ -35,7 +35,7 @@ namespace GrandCentralDispatch.Extensions
         /// <param name="resolver"><see cref="Resolver{T}"/></param>
         /// <param name="services"><see cref="IServiceCollection"/></param>
         public static void AddAsyncCluster<TInput, TOutput>(this IServiceCollection services,
-                        Func<IServiceProvider, RemoteResolver<TInput, TOutput>> resolver)
+            Func<IServiceProvider, RemoteResolver<TInput, TOutput>> resolver)
         {
             services.TryAddSingleton(resolver);
             services.TryAddSingleton<IAsyncCluster<TInput, TOutput>, AsyncCluster<TInput, TOutput>>();
@@ -43,7 +43,7 @@ namespace GrandCentralDispatch.Extensions
         }
 
         /// <summary>
-        /// Add <see cref="ICluster{TInput1}"/> to <see cref="IServiceCollection"/>
+        /// Add <see cref="ICluster{TInput}"/> to <see cref="IServiceCollection"/>
         /// </summary>
         /// <typeparam name="TInput"></typeparam>
         /// <param name="services"><see cref="IServiceCollection"/></param>

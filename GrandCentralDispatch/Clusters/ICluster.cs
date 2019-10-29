@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Models;
+using GrandCentralDispatch.Options;
 
 namespace GrandCentralDispatch.Clusters
 {
@@ -14,26 +15,29 @@ namespace GrandCentralDispatch.Clusters
     public interface IAsyncCluster<TInput, TOutput> : IExposeMetrics, IDisposable
     {
         /// <summary>
-        /// Execute an item to the cluster instantly
+        /// Execute an item against the cluster immediately
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
+        Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item,
+            CancellationToken cancellationToken);
 
         /// <summary>
-        /// Dispatch an item to the cluster and wait for the result
+        /// Dispatch an item to the cluster using a dispatcher queue (using the Window parameter from <see cref="ClusterOptions"/>)
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="selector"></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
+        Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item,
+            CancellationToken cancellationToken);
 
         /// <summary>
-        /// Execute an item to the cluster instantly
+        /// Execute an item against the cluster immediately
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>
@@ -42,7 +46,7 @@ namespace GrandCentralDispatch.Clusters
         Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Dispatch an item to the cluster and wait for the result
+        /// Dispatch an item to the cluster using a dispatcher queue (using the Window parameter from <see cref="ClusterOptions"/>)
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>

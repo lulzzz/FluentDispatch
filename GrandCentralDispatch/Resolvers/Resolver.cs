@@ -42,9 +42,9 @@ namespace GrandCentralDispatch.Resolvers
         /// <returns><see cref="Task"/></returns>
         protected virtual Task Process(TInput item, NodeMetrics nodeMetrics, CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            throw new NotImplementedException();
         }
-    }   
+    }
 
     /// <summary>
     /// Resolve the processing function which will be applied to each <see cref="TInput1"/> and <see cref="TInput2"/>
@@ -58,5 +58,5 @@ namespace GrandCentralDispatch.Resolvers
         /// </summary>
         /// <returns><see cref="Func{TResult}"/></returns>
         public abstract Func<TInput1, TInput2, NodeMetrics, CancellationToken, Task> GetItemFunc();
-    }  
+    }
 }

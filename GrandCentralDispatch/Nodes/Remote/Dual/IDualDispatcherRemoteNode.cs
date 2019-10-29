@@ -4,7 +4,7 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Nodes.Remote.Dual
 {
     /// <summary>
-    /// Node which process items.
+    /// Node which process items remotely.
     /// </summary>
     /// <typeparam name="TInput1"></typeparam>
     /// <typeparam name="TInput2"></typeparam>

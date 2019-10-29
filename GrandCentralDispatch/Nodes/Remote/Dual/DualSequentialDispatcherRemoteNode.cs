@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -23,7 +22,7 @@ using GrandCentralDispatch.Remote;
 namespace GrandCentralDispatch.Nodes.Remote.Dual
 {
     /// <summary>
-    /// Node which process items sequentially.
+    /// Node which process items sequentially remotely.
     /// </summary>
     /// <typeparam name="TInput1">Item to be processed</typeparam>
     /// <typeparam name="TInput2">Item to be processed</typeparam>
@@ -194,7 +193,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                 {
                     NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
                 });
-            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
 
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
 
@@ -202,7 +201,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
             var item2ProcessSource = new ConcurrentDictionary<Guid, TOutput2>();
             var joinBlock =
                 new JoinBlock<KeyValuePair<Guid, CancellationTokenSource>, KeyValuePair<Guid, CancellationTokenSource>>(
-                    new GroupingDataflowBlockOptions { Greedy = false });
+                    new GroupingDataflowBlockOptions {Greedy = false});
             _item1Source =
                 new TransformBlock<Tuple<Guid, TOutput1, CancellationTokenSource>,
                     KeyValuePair<Guid, CancellationTokenSource>
@@ -212,7 +211,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                         !item1ProcessSource.TryAdd(source.Item1, source.Item2))
                     {
                         _logger.LogError(
-                            $"Could not add item of type {source.Item2.GetType().ToString()} and key {source.Item1.ToString()} to the buffer.");
+                            $"Could not add item of type {source.Item2.GetType()} and key {source.Item1.ToString()} to the buffer.");
                     }
 
                     return new KeyValuePair<Guid, CancellationTokenSource>(source.Item1, source.Item3);
@@ -227,7 +226,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                             !item2ProcessSource.TryAdd(source.Item1, source.Item2))
                         {
                             _logger.LogError(
-                                $"Could not add item of type {source.Item2.GetType().ToString()} and key {source.Item1.ToString()} to the buffer.");
+                                $"Could not add item of type {source.Item2.GetType()} and key {source.Item1.ToString()} to the buffer.");
                         }
 
                         return new KeyValuePair<Guid, CancellationTokenSource>(source.Item1, source.Item3);
@@ -258,7 +257,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                             if (CpuUsage > _clusterOptions.LimitCpuUsage)
                             {
                                 var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                                await Task.Delay((int)suspensionTime, ct);
+                                await Task.Delay((int) suspensionTime, ct);
                             }
 
                             if (item1ProcessSource.ContainsKey(combined.Item1.Key) &&
@@ -342,7 +341,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         if (_clusterOptions.PersistenceEnabled)
@@ -351,8 +350,8 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                         }
 
                         _item1Source.Post(new Tuple<Guid, TOutput1, CancellationTokenSource>(item.Key,
-                             await _item1RemoteContract.ProcessItem1Remotely(item.Entity, NodeMetrics),
-                             item.CancellationTokenSource));
+                            await _item1RemoteContract.ProcessItem1Remotely(item.Entity, NodeMetrics),
+                            item.CancellationTokenSource));
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -362,7 +361,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                     {
                         Interlocked.Increment(ref _processedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -410,7 +409,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         if (_clusterOptions.PersistenceEnabled)
@@ -430,7 +429,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                     {
                         Interlocked.Increment(ref _processedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -478,7 +477,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var entity = item.Entity();
@@ -500,7 +499,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -548,7 +547,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var entity = item.Entity();
@@ -570,7 +569,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -634,7 +633,8 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
             if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
-            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) + Interlocked.Exchange(ref _executorProcessedItems, 0L);
+            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) +
+                                            Interlocked.Exchange(ref _executorProcessedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
             try

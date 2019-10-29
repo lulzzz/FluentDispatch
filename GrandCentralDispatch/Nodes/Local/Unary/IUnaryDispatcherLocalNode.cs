@@ -4,7 +4,7 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Nodes.Local.Unary
 {
     /// <summary>
-    /// Node which process items.
+    /// Node which process items locally.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     internal interface IUnaryDispatcherLocalNode<in TInput> : IDisposable

@@ -8,12 +8,13 @@ using System.Collections.Concurrent;
 
 namespace GrandCentralDispatch.Processors.Async
 {
-    internal abstract class AsyncAbstractQueueProcessor<TInput, TOutput, T> : Processor where T : AsyncItem<TInput, TOutput>
+    internal abstract class AsyncAbstractQueueProcessor<TInput, TOutput, TAsync> : Processor
+        where TAsync : AsyncItem<TInput, TOutput>
     {
-        protected readonly ISubject<T> SynchronizedItemsSubject;
+        protected readonly ISubject<TAsync> SynchronizedItemsSubject;
 
-        protected readonly ConcurrentQueue<T> ItemsBuffer =
-            new ConcurrentQueue<T>();
+        protected readonly ConcurrentQueue<TAsync> ItemsBuffer =
+            new ConcurrentQueue<TAsync>();
 
         protected IDisposable ItemsSubjectSubscription;
 
@@ -21,9 +22,9 @@ namespace GrandCentralDispatch.Processors.Async
             ClusterOptions clusterOptions,
             ILogger logger) : base(circuitBreakerPolicy, clusterOptions, logger)
         {
-            ISubject<T> itemsSubject = new Subject<T>();
+            ISubject<TAsync> itemsSubject = new Subject<TAsync>();
 
-            // SynchronizedItemsQueueSubject is a thread-safe object in which we can push items concurrently
+            // SynchronizedItemsSubject is a thread-safe object in which we can push items concurrently
             SynchronizedItemsSubject = Subject.Synchronize(itemsSubject);
         }
 

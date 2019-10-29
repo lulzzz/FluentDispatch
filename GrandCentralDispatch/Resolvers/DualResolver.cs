@@ -6,7 +6,7 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Resolvers
 {
     /// <summary>
-    /// Generic resolver which enable overriding the default behavior for each incoming new item
+    /// Generic resolver which enable overriding the default behavior for each new incoming item
     /// </summary>
     /// <typeparam name="TOutput1"><see cref="TOutput1"/></typeparam>
     /// <typeparam name="TOutput2"><see cref="TOutput2"/></typeparam>
@@ -22,7 +22,7 @@ namespace GrandCentralDispatch.Resolvers
         }
 
         /// <summary>
-        /// Override this method to apply a specific process to each incoming item
+        /// Override this method to apply a specific process to each item
         /// </summary>
         /// <param name="item1"><see cref="TOutput1"/></param>
         /// <param name="item2"><see cref="TOutput2"/></param>
@@ -32,7 +32,7 @@ namespace GrandCentralDispatch.Resolvers
         protected virtual Task Process(TOutput1 item1, TOutput2 item2, NodeMetrics nodeMetrics,
             CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            throw new NotImplementedException();
         }
     }
 }

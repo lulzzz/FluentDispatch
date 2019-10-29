@@ -6,11 +6,11 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Nodes.Remote.Async
 {
     /// <summary>
-    /// Node which process items.
+    /// Node which process items remotely.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal interface IAsyncDispatcherQueueRemoteNode<TInput, TOutput> : IDisposable
+    internal interface IAsyncDispatcherQueueRemoteNode<in TInput, TOutput> : IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="Func{TInput}"/> to the node.

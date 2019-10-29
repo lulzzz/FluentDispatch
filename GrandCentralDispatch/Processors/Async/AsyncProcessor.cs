@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading;
@@ -17,11 +16,12 @@ namespace GrandCentralDispatch.Processors.Async
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
     /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-    /// <typeparam name="T"><see cref="T"/></typeparam>
-    internal abstract class AsyncProcessor<TInput, TOutput, T> : AsyncAbstractProcessor<TInput, TOutput, T> where T : AsyncItem<TInput, TOutput>
+    /// <typeparam name="TAsync"><see cref="TAsync"/></typeparam>
+    internal abstract class AsyncProcessor<TInput, TOutput, TAsync> : AsyncAbstractProcessor<TInput, TOutput, TAsync>
+        where TAsync : AsyncItem<TInput, TOutput>
     {
         /// <summary>
-        /// <see cref="AsyncProcessor{TInput,TOutput,T}"/>
+        /// <see cref="AsyncProcessor{TInput,TOutput,TAsync}"/>
         /// </summary>
         /// <param name="circuitBreakerPolicy"><see cref="CircuitBreakerPolicy"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
@@ -36,7 +36,7 @@ namespace GrandCentralDispatch.Processors.Async
             // Then we process items asynchronously, with a circuit breaker policy
             ItemsSubjectSubscription = SynchronizedItemsSubject
                 .ObserveOn(new EventLoopScheduler(ts => new Thread(ts)
-                { IsBackground = true, Priority = ThreadPriority }))
+                    {IsBackground = true, Priority = ThreadPriority}))
                 .Select(item =>
                 {
                     return Observable.FromAsync(() =>
@@ -48,41 +48,36 @@ namespace GrandCentralDispatch.Processors.Async
                 })
                 .Merge()
                 .Subscribe(unit =>
-                {
-                    if (unit.Outcome == OutcomeType.Failure)
                     {
-                        Logger.LogCritical(
-                            unit.FinalException != null
-                                ? $"Could not process bulk: {unit.FinalException.Message}."
-                                : "An error has occured while processing the bulk.");
-                    }
-                },
+                        if (unit.Outcome == OutcomeType.Failure)
+                        {
+                            Logger.LogCritical(
+                                unit.FinalException != null
+                                    ? $"Could not process bulk: {unit.FinalException.Message}."
+                                    : "An error has occured while processing the bulk.");
+                        }
+                    },
                     ex => Logger.LogError(ex.Message));
         }
 
         /// <summary>
         /// Process an incoming item
         /// </summary>
-        /// <param name="item"><see cref="TInput"/></param>
         /// <param name="item"><see cref="AsyncItem{TInput,TOutput}"/></param>
-        public Task<TOutput> ProcessAsync(T item)
+        protected Task<TOutput> ProcessAsync(TAsync item)
         {
             Interlocked.Increment(ref _totalItemsProcessed);
+            item.CancellationToken.Register(() => { item.TaskCompletionSource.TrySetCanceled(); });
             SynchronizedItemsSubject.OnNext(item);
-            item.CancellationToken.Register(() =>
-            {
-                item.TaskCompletionSource.TrySetCanceled();
-            });
-
             return item.TaskCompletionSource.Task;
         }
 
         /// <summary>
-        /// The bulk processor.
+        /// The processor.
         /// </summary>
-        /// <param name="item"><see cref="TInput"/> to process</param>
+        /// <param name="item"><see cref="AsyncItem{TInput,TOutput}"/> to process</param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
-        protected abstract Task Process(T item, CancellationToken cancellationToken);
+        protected abstract Task Process(TAsync item, CancellationToken cancellationToken);
     }
 }

@@ -15,7 +15,8 @@ namespace GrandCentralDispatch.Nodes.Local.Async
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class AsyncSequentialDispatcherLocalNode<TInput, TOutput> : AsyncParallelProcessor<TInput, TOutput, AsyncPredicateItem<TInput, TOutput>>,
+    internal sealed class AsyncSequentialDispatcherLocalNode<TInput, TOutput> :
+        AsyncParallelProcessor<TInput, TOutput, AsyncPredicateItem<TInput, TOutput>>,
         IAsyncDispatcherQueueLocalNode<TInput, TOutput>
     {
         /// <summary>
@@ -85,7 +86,8 @@ namespace GrandCentralDispatch.Nodes.Local.Async
         /// <param name="progress">Progress of the current bulk</param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
-        protected override async Task Process(IList<AsyncPredicateItem<TInput, TOutput>> bulk, IProgress<double> progress,
+        protected override async Task Process(IList<AsyncPredicateItem<TInput, TOutput>> bulk,
+            IProgress<double> progress,
             CancellationToken cancellationToken)
         {
             var currentProgress = 0;
@@ -113,7 +115,7 @@ namespace GrandCentralDispatch.Nodes.Local.Async
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var result = await item.Selector(item.Item);
@@ -128,7 +130,7 @@ namespace GrandCentralDispatch.Nodes.Local.Async
                     {
                         Interlocked.Increment(ref _processedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -144,17 +146,19 @@ namespace GrandCentralDispatch.Nodes.Local.Async
         }
 
         /// <summary>
-        /// Dispatch a <see cref="Func{TInput}"/> to the node.
+        /// Dispatch a <see cref="Func{TInput}"/> to the local node using a selector predicate.
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-        /// <param name="selector"></param>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
+        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item,
+            CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await AddAsync(new AsyncPredicateItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
+            return await AddAsync(
+                new AsyncPredicateItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
         }
 
         /// <summary>

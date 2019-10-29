@@ -17,11 +17,12 @@ using GrandCentralDispatch.Hubs.Receiver;
 namespace GrandCentralDispatch.Nodes.Remote.Async
 {
     /// <summary>
-    /// Node which process items in parallel.
+    /// Node which process items in parallel remotely.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class AsyncParallelDispatcherRemoteNode<TInput, TOutput> : AsyncParallelProcessor<TInput, TOutput, AsyncItem<TInput, TOutput>>,
+    internal sealed class AsyncParallelDispatcherRemoteNode<TInput, TOutput> :
+        AsyncParallelProcessor<TInput, TOutput, AsyncItem<TInput, TOutput>>,
         IAsyncDispatcherQueueRemoteNode<TInput, TOutput>
     {
         /// <summary>
@@ -99,7 +100,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
             _logger = logger;
             _clusterOptions = clusterOptions;
             var channel = new Channel(host.MachineName, host.Port,
-    ChannelCredentials.Insecure);
+                ChannelCredentials.Insecure);
             _remoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput, TOutput>>(channel);
             IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
             _remoteNodeHealthSubscription =
@@ -107,7 +108,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
                 {
                     NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
                 });
-            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
         }
 
@@ -146,7 +147,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var result = await _remoteContract.ProcessRemotely(item.Item, NodeMetrics);
@@ -161,7 +162,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
                     {
                         Interlocked.Increment(ref _processedItems);
                         Interlocked.Increment(ref currentProgress);
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 

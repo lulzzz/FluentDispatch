@@ -22,32 +22,32 @@ using GrandCentralDispatch.Nodes.Remote.Dual;
 namespace GrandCentralDispatch.Clusters
 {
     /// <summary>
-    /// The cluster which is in charge of distributing the load to the configured remote nodes.
+    /// The cluster which is in charge of distributing the load to the configured nodes.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
     public class AsyncCluster<TInput, TOutput> : ClusterBase, IAsyncCluster<TInput, TOutput>
     {
         /// <summary>
-        /// Remote nodes of the cluster
+        /// Local atomic nodes of the cluster, which process items immediately
         /// </summary>
         private readonly List<IAsyncDispatcherLocalNode<TInput, TOutput>> _localAtomicNodes =
             new List<IAsyncDispatcherLocalNode<TInput, TOutput>>();
 
         /// <summary>
-        /// Remote nodes of the cluster
+        /// Local queue nodes of the cluster, which process items using a dispatcher queue
         /// </summary>
         private readonly List<IAsyncDispatcherQueueLocalNode<TInput, TOutput>> _localQueueNodes =
             new List<IAsyncDispatcherQueueLocalNode<TInput, TOutput>>();
 
         /// <summary>
-        /// Remote nodes of the cluster
+        /// Remote atomic nodes of the cluster, which process items immediately
         /// </summary>
         private readonly List<IAsyncDispatcherRemoteNode<TInput, TOutput>> _remoteAtomicNodes =
             new List<IAsyncDispatcherRemoteNode<TInput, TOutput>>();
 
         /// <summary>
-        /// Remote nodes of the cluster
+        /// Remote queue nodes of the cluster, which process items using a dispatcher queue
         /// </summary>
         private readonly List<IAsyncDispatcherQueueRemoteNode<TInput, TOutput>> _remoteQueueNodes =
             new List<IAsyncDispatcherQueueRemoteNode<TInput, TOutput>>();
@@ -98,12 +98,12 @@ namespace GrandCentralDispatch.Clusters
                     if (!ClusterOptions.Hosts.Any())
                     {
                         throw new GrandCentralDispatchException(
-                            "Hosts must be provided if cluster option ExecuteRemotely is true.");
+                            "Hosts must be provided.");
                     }
 
                     foreach (var host in ClusterOptions.Hosts)
                     {
-                        _remoteAtomicNodes.Add((IAsyncDispatcherRemoteNode<TInput, TOutput>)Activator.CreateInstance(
+                        _remoteAtomicNodes.Add((IAsyncDispatcherRemoteNode<TInput, TOutput>) Activator.CreateInstance(
                             typeof(AsyncDispatcherRemoteNode<TInput, TOutput>),
                             host,
                             CancellationTokenSource,
@@ -113,25 +113,27 @@ namespace GrandCentralDispatch.Clusters
 
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
-                            _remoteQueueNodes.Add((IAsyncDispatcherQueueRemoteNode<TInput, TOutput>)Activator.CreateInstance(
-                                typeof(AsyncParallelDispatcherRemoteNode<TInput, TOutput>),
-                                host,
-                                Progress,
-                                CancellationTokenSource,
-                                circuitBreakerOptions,
-                                clusterOptions,
-                                Logger));
+                            _remoteQueueNodes.Add(
+                                (IAsyncDispatcherQueueRemoteNode<TInput, TOutput>) Activator.CreateInstance(
+                                    typeof(AsyncParallelDispatcherRemoteNode<TInput, TOutput>),
+                                    host,
+                                    Progress,
+                                    CancellationTokenSource,
+                                    circuitBreakerOptions,
+                                    clusterOptions,
+                                    Logger));
                         }
                         else if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
                         {
-                            _remoteQueueNodes.Add((IAsyncDispatcherQueueRemoteNode<TInput, TOutput>)Activator.CreateInstance(
-                                typeof(AsyncSequentialDispatcherRemoteNode<TInput, TOutput>),
-                                host,
-                                Progress,
-                                CancellationTokenSource,
-                                circuitBreakerOptions,
-                                clusterOptions,
-                                Logger));
+                            _remoteQueueNodes.Add(
+                                (IAsyncDispatcherQueueRemoteNode<TInput, TOutput>) Activator.CreateInstance(
+                                    typeof(AsyncSequentialDispatcherRemoteNode<TInput, TOutput>),
+                                    host,
+                                    Progress,
+                                    CancellationTokenSource,
+                                    circuitBreakerOptions,
+                                    clusterOptions,
+                                    Logger));
                         }
                         else
                         {
@@ -144,7 +146,7 @@ namespace GrandCentralDispatch.Clusters
                 {
                     for (var i = 0; i <= clusterOptions.ClusterSize; i++)
                     {
-                        _localAtomicNodes.Add((IAsyncDispatcherLocalNode<TInput, TOutput>)Activator.CreateInstance(
+                        _localAtomicNodes.Add((IAsyncDispatcherLocalNode<TInput, TOutput>) Activator.CreateInstance(
                             typeof(AsyncDispatcherLocalNode<TInput, TOutput>),
                             CancellationTokenSource,
                             circuitBreakerOptions,
@@ -153,23 +155,25 @@ namespace GrandCentralDispatch.Clusters
 
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
-                            _localQueueNodes.Add((IAsyncDispatcherQueueLocalNode<TInput, TOutput>)Activator.CreateInstance(
-                                typeof(AsyncParallelDispatcherLocalNode<TInput, TOutput>),
-                                Progress,
-                                CancellationTokenSource,
-                                circuitBreakerOptions,
-                                clusterOptions,
-                                Logger));
+                            _localQueueNodes.Add(
+                                (IAsyncDispatcherQueueLocalNode<TInput, TOutput>) Activator.CreateInstance(
+                                    typeof(AsyncParallelDispatcherLocalNode<TInput, TOutput>),
+                                    Progress,
+                                    CancellationTokenSource,
+                                    circuitBreakerOptions,
+                                    clusterOptions,
+                                    Logger));
                         }
                         else if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
                         {
-                            _localQueueNodes.Add((IAsyncDispatcherQueueLocalNode<TInput, TOutput>)Activator.CreateInstance(
-                                typeof(AsyncSequentialDispatcherLocalNode<TInput, TOutput>),
-                                Progress,
-                                CancellationTokenSource,
-                                circuitBreakerOptions,
-                                clusterOptions,
-                                Logger));
+                            _localQueueNodes.Add(
+                                (IAsyncDispatcherQueueLocalNode<TInput, TOutput>) Activator.CreateInstance(
+                                    typeof(AsyncSequentialDispatcherLocalNode<TInput, TOutput>),
+                                    Progress,
+                                    CancellationTokenSource,
+                                    circuitBreakerOptions,
+                                    clusterOptions,
+                                    Logger));
                         }
                         else
                         {
@@ -181,25 +185,31 @@ namespace GrandCentralDispatch.Clusters
 
                 foreach (var node in _localAtomicNodes)
                 {
-                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeLocalAtomicNodeHealth));
+                    _nodeHealthSubscriptions.Add(
+                        node.NodeMetrics.RefreshSubject.Subscribe(ComputeLocalAtomicNodeHealth));
                 }
 
                 foreach (var node in _localQueueNodes)
                 {
-                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeLocalQueueNodeHealth));
+                    _nodeHealthSubscriptions.Add(
+                        node.NodeMetrics.RefreshSubject.Subscribe(ComputeLocalQueueNodeHealth));
                 }
 
                 foreach (var node in _remoteAtomicNodes)
                 {
-                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeRemoteAtomicNodeHealth));
+                    _nodeHealthSubscriptions.Add(
+                        node.NodeMetrics.RefreshSubject.Subscribe(ComputeRemoteAtomicNodeHealth));
                 }
 
                 foreach (var node in _remoteQueueNodes)
                 {
-                    _nodeHealthSubscriptions.Add(node.NodeMetrics.RefreshSubject.Subscribe(ComputeRemoteQueueNodeHealth));
+                    _nodeHealthSubscriptions.Add(
+                        node.NodeMetrics.RefreshSubject.Subscribe(ComputeRemoteQueueNodeHealth));
                 }
 
-                LogClusterOptions(circuitBreakerOptions, _localAtomicNodes.Count + _localQueueNodes.Count + _remoteAtomicNodes.Count + _remoteQueueNodes.Count);
+                LogClusterOptions(circuitBreakerOptions,
+                    _localAtomicNodes.Count + _localQueueNodes.Count + _remoteAtomicNodes.Count +
+                    _remoteQueueNodes.Count);
                 Logger.LogInformation("Cluster successfully initialized.");
             }
             catch (Exception ex)
@@ -253,24 +263,27 @@ namespace GrandCentralDispatch.Clusters
         /// </summary>
         protected override void ComputeClusterHealth()
         {
-            ClusterMetrics.CurrentThroughput = _localAtomicNodes.Sum(node => node.NodeMetrics.CurrentThroughput) + _localQueueNodes.Sum(node => node.NodeMetrics.CurrentThroughput) +
-                _remoteAtomicNodes.Sum(node => node.NodeMetrics.CurrentThroughput) + _remoteQueueNodes.Sum(node => node.NodeMetrics.CurrentThroughput);
+            ClusterMetrics.CurrentThroughput = _localAtomicNodes.Sum(node => node.NodeMetrics.CurrentThroughput) +
+                                               _localQueueNodes.Sum(node => node.NodeMetrics.CurrentThroughput) +
+                                               _remoteAtomicNodes.Sum(node => node.NodeMetrics.CurrentThroughput) +
+                                               _remoteQueueNodes.Sum(node => node.NodeMetrics.CurrentThroughput);
             base.ComputeClusterHealth();
         }
 
         /// <summary>
-        /// Execute an item to the cluster instantly
+        /// Execute an item against the cluster immediately
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
+        public async Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item,
+            CancellationToken cancellationToken)
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localAtomicNodes
-                    .ToList();
+                var availableNodes = _localAtomicNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -284,7 +297,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                                                availableNodes.Count - 1));
+                            availableNodes.Count - 1));
                         return await node.ExecuteAsync(selector, item, cancellationToken);
                     }
                 }
@@ -304,19 +317,19 @@ namespace GrandCentralDispatch.Clusters
         }
 
         /// <summary>
-        /// Dispatch an item to the cluster and wait for the result
+        /// Dispatch an item to the cluster using a dispatcher queue (using the Window parameter from <see cref="ClusterOptions"/>)
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-        /// <param name="selector"></param>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
+        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item,
+            CancellationToken cancellationToken)
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localQueueNodes
-                    .ToList();
+                var availableNodes = _localQueueNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -330,7 +343,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                                                availableNodes.Count - 1));
+                            availableNodes.Count - 1));
                         return await node.DispatchAsync(selector, item, cancellationToken);
                     }
                 }
@@ -350,7 +363,7 @@ namespace GrandCentralDispatch.Clusters
         }
 
         /// <summary>
-        /// Execute an item to the cluster instantly
+        /// Execute an item against the cluster immediately
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>
@@ -361,9 +374,10 @@ namespace GrandCentralDispatch.Clusters
             if (ClusterOptions.ExecuteRemotely)
             {
                 var availableNodes = _remoteAtomicNodes
-                .Where(node =>
-                    node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-                .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -426,7 +440,7 @@ namespace GrandCentralDispatch.Clusters
         }
 
         /// <summary>
-        /// Dispatch an item to the cluster and wait for the result
+        /// Dispatch an item to the cluster using a dispatcher queue (using the Window parameter from <see cref="ClusterOptions"/>)
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
         /// <param name="item"><see cref="TInput"/></param>
@@ -437,9 +451,10 @@ namespace GrandCentralDispatch.Clusters
             if (ClusterOptions.ExecuteRemotely)
             {
                 var availableNodes = _remoteQueueNodes
-                .Where(node =>
-                    node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-                .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -550,14 +565,16 @@ namespace GrandCentralDispatch.Clusters
     public class Cluster<TInput> : ClusterBase, ICluster<TInput>
     {
         /// <summary>
-        /// Nodes of the cluster
+        /// Local nodes of the cluster
         /// </summary>
-        private readonly List<IUnaryDispatcherLocalNode<TInput>> _localNodes = new List<IUnaryDispatcherLocalNode<TInput>>();
+        private readonly List<IUnaryDispatcherLocalNode<TInput>> _localNodes =
+            new List<IUnaryDispatcherLocalNode<TInput>>();
 
         /// <summary>
-        /// Nodes of the cluster
+        /// Remote nodes of the cluster
         /// </summary>
-        private readonly List<IUnaryDispatcherRemoteNode<TInput>> _remoteNodes = new List<IUnaryDispatcherRemoteNode<TInput>>();
+        private readonly List<IUnaryDispatcherRemoteNode<TInput>> _remoteNodes =
+            new List<IUnaryDispatcherRemoteNode<TInput>>();
 
         /// <summary>
         /// Node health subscriptions
@@ -613,14 +630,14 @@ namespace GrandCentralDispatch.Clusters
                     if (!ClusterOptions.Hosts.Any())
                     {
                         throw new GrandCentralDispatchException(
-                            "Hosts must be provided if cluster option ExecuteRemotely is true.");
+                            "Hosts must be provided.");
                     }
 
                     foreach (var host in ClusterOptions.Hosts)
                     {
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
-                            _remoteNodes.Add((IUnaryDispatcherRemoteNode<TInput>)Activator.CreateInstance(
+                            _remoteNodes.Add((IUnaryDispatcherRemoteNode<TInput>) Activator.CreateInstance(
                                 typeof(UnaryParallelDispatcherRemoteNode<TInput>),
                                 PersistentCache,
                                 Progress,
@@ -632,7 +649,7 @@ namespace GrandCentralDispatch.Clusters
                         }
                         else if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
                         {
-                            _remoteNodes.Add((IUnaryDispatcherRemoteNode<TInput>)Activator.CreateInstance(
+                            _remoteNodes.Add((IUnaryDispatcherRemoteNode<TInput>) Activator.CreateInstance(
                                 typeof(UnarySequentialDispatcherRemoteNode<TInput>),
                                 PersistentCache,
                                 Progress,
@@ -655,7 +672,7 @@ namespace GrandCentralDispatch.Clusters
                     {
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
-                            _localNodes.Add((IUnaryDispatcherLocalNode<TInput>)Activator.CreateInstance(
+                            _localNodes.Add((IUnaryDispatcherLocalNode<TInput>) Activator.CreateInstance(
                                 typeof(UnaryParallelDispatcherLocalNode<TInput>),
                                 PersistentCache,
                                 funcResolver.GetItemFunc(),
@@ -667,7 +684,7 @@ namespace GrandCentralDispatch.Clusters
                         }
                         else if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
                         {
-                            _localNodes.Add((IUnaryDispatcherLocalNode<TInput>)Activator.CreateInstance(
+                            _localNodes.Add((IUnaryDispatcherLocalNode<TInput>) Activator.CreateInstance(
                                 typeof(UnarySequentialDispatcherLocalNode<TInput>),
                                 PersistentCache,
                                 funcResolver.GetItemFunc(),
@@ -752,7 +769,8 @@ namespace GrandCentralDispatch.Clusters
         /// </summary>
         protected override void ComputeClusterHealth()
         {
-            ClusterMetrics.CurrentThroughput = _localNodes.Sum(node => node.NodeMetrics.CurrentThroughput) + _remoteNodes.Sum(node => node.NodeMetrics.CurrentThroughput);
+            ClusterMetrics.CurrentThroughput = _localNodes.Sum(node => node.NodeMetrics.CurrentThroughput) +
+                                               _remoteNodes.Sum(node => node.NodeMetrics.CurrentThroughput);
             base.ComputeClusterHealth();
         }
 
@@ -768,8 +786,7 @@ namespace GrandCentralDispatch.Clusters
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localNodes
-                    .ToList();
+                var availableNodes = _localNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -797,9 +814,10 @@ namespace GrandCentralDispatch.Clusters
             else
             {
                 var availableNodes = _remoteNodes
-               .Where(node =>
-                   node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-               .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -866,8 +884,7 @@ namespace GrandCentralDispatch.Clusters
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localNodes
-                    .ToList();
+                var availableNodes = _localNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -895,9 +912,10 @@ namespace GrandCentralDispatch.Clusters
             else
             {
                 var availableNodes = _remoteNodes
-                .Where(node =>
-                    node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-                .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
@@ -994,13 +1012,13 @@ namespace GrandCentralDispatch.Clusters
     public class Cluster<TInput1, TInput2, TOutput1, TOutput2> : ClusterBase, ICluster<TInput1, TInput2>
     {
         /// <summary>
-        /// Nodes of the cluster
+        /// Local nodes of the cluster
         /// </summary>
         private readonly List<IDualDispatcherLocalNode<TInput1, TInput2>> _localNodes =
             new List<IDualDispatcherLocalNode<TInput1, TInput2>>();
 
         /// <summary>
-        /// Nodes of the cluster
+        /// Remote nodes of the cluster
         /// </summary>
         private readonly List<IDualDispatcherRemoteNode<TInput1, TInput2>> _remoteNodes =
             new List<IDualDispatcherRemoteNode<TInput1, TInput2>>();
@@ -1090,14 +1108,14 @@ namespace GrandCentralDispatch.Clusters
                     if (!ClusterOptions.Hosts.Any())
                     {
                         throw new GrandCentralDispatchException(
-                            "Hosts must be provided if cluster option ExecuteRemotely is true.");
+                            "Hosts must be provided.");
                     }
 
                     foreach (var host in ClusterOptions.Hosts)
                     {
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
-                            _remoteNodes.Add((IDualDispatcherRemoteNode<TInput1, TInput2>)Activator.CreateInstance(
+                            _remoteNodes.Add((IDualDispatcherRemoteNode<TInput1, TInput2>) Activator.CreateInstance(
                                 typeof(DualParallelDispatcherRemoteNode<TInput1, TInput2, TOutput1, TOutput2>),
                                 PersistentCache,
                                 Progress,
@@ -1109,7 +1127,7 @@ namespace GrandCentralDispatch.Clusters
                         }
                         else if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
                         {
-                            _remoteNodes.Add((IDualDispatcherRemoteNode<TInput1, TInput2>)Activator.CreateInstance(
+                            _remoteNodes.Add((IDualDispatcherRemoteNode<TInput1, TInput2>) Activator.CreateInstance(
                                 typeof(DualSequentialDispatcherRemoteNode<TInput1, TInput2, TOutput1, TOutput2>),
                                 PersistentCache,
                                 Progress,
@@ -1132,7 +1150,7 @@ namespace GrandCentralDispatch.Clusters
                     {
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
-                            _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>)Activator.CreateInstance(
+                            _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>) Activator.CreateInstance(
                                 typeof(DualParallelDispatcherLocalNode<TInput1, TInput2, TOutput1, TOutput2>),
                                 PersistentCache,
                                 item1PartialResolver.GetItemFunc(),
@@ -1146,7 +1164,7 @@ namespace GrandCentralDispatch.Clusters
                         }
                         else if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
                         {
-                            _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>)Activator.CreateInstance(
+                            _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>) Activator.CreateInstance(
                                 typeof(DualSequentialDispatcherLocalNode<TInput1, TInput2, TOutput1, TOutput2>),
                                 PersistentCache,
                                 item1PartialResolver.GetItemFunc(),
@@ -1238,7 +1256,8 @@ namespace GrandCentralDispatch.Clusters
         /// </summary>
         protected override void ComputeClusterHealth()
         {
-            ClusterMetrics.CurrentThroughput = _localNodes.Sum(node => node.NodeMetrics.CurrentThroughput) + _remoteNodes.Sum(node => node.NodeMetrics.CurrentThroughput);
+            ClusterMetrics.CurrentThroughput = _localNodes.Sum(node => node.NodeMetrics.CurrentThroughput) +
+                                               _remoteNodes.Sum(node => node.NodeMetrics.CurrentThroughput);
             base.ComputeClusterHealth();
         }
 
@@ -1255,8 +1274,7 @@ namespace GrandCentralDispatch.Clusters
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localNodes
-                    .ToList();
+                var availableNodes = _localNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1269,7 +1287,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput1>(key, item, persistentCacheToken);
@@ -1295,9 +1315,10 @@ namespace GrandCentralDispatch.Clusters
             else
             {
                 var availableNodes = _remoteNodes
-                .Where(node =>
-                    node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-                .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1310,7 +1331,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput1>(key, item, persistentCacheToken);
@@ -1379,8 +1402,7 @@ namespace GrandCentralDispatch.Clusters
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localNodes
-                    .ToList();
+                var availableNodes = _localNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1393,7 +1415,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput2>(key, item, persistentCacheToken);
@@ -1420,7 +1444,8 @@ namespace GrandCentralDispatch.Clusters
             {
                 var availableNodes = _remoteNodes
                     .Where(node =>
-                        node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
                     .ToList();
                 if (availableNodes.Any())
                 {
@@ -1434,7 +1459,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput2>(key, item, persistentCacheToken);
@@ -1503,8 +1530,7 @@ namespace GrandCentralDispatch.Clusters
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localNodes
-                    .ToList();
+                var availableNodes = _localNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1517,7 +1543,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput1>(key, itemProducer, persistentCacheToken);
@@ -1543,9 +1571,10 @@ namespace GrandCentralDispatch.Clusters
             else
             {
                 var availableNodes = _remoteNodes
-                .Where(node =>
-                    node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-                .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1558,7 +1587,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput1>(key, itemProducer, persistentCacheToken);
@@ -1627,8 +1658,7 @@ namespace GrandCentralDispatch.Clusters
         {
             if (!ClusterOptions.ExecuteRemotely)
             {
-                var availableNodes = _localNodes
-                    .ToList();
+                var availableNodes = _localNodes.ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1641,7 +1671,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput2>(key, itemProducer, persistentCacheToken);
@@ -1667,9 +1699,10 @@ namespace GrandCentralDispatch.Clusters
             else
             {
                 var availableNodes = _remoteNodes
-                .Where(node =>
-                    node.NodeMetrics.Alive && (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
-                .ToList();
+                    .Where(node =>
+                        node.NodeMetrics.Alive &&
+                        (!ClusterOptions.EvictItemsWhenNodesAreFull || !node.NodeMetrics.Full))
+                    .ToList();
                 if (availableNodes.Any())
                 {
                     if (_resolverCache.TryGetValue(key, out var value) && value is Guid affinityNodeGuid)
@@ -1682,7 +1715,9 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.BestEffort)
                     {
                         var node = availableNodes.Aggregate((node1, node2) =>
-                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed ? node1 : node2);
+                            node1.NodeMetrics.TotalItemsProcessed <= node2.NodeMetrics.TotalItemsProcessed
+                                ? node1
+                                : node2);
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput2>(key, itemProducer, persistentCacheToken);

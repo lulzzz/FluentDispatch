@@ -4,7 +4,7 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Nodes.Local.Dual
 {
     /// <summary>
-    /// Node which process items.
+    /// Node which process items locally.
     /// </summary>
     /// <typeparam name="TInput1"></typeparam>
     /// <typeparam name="TInput2"></typeparam>

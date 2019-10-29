@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -22,7 +21,7 @@ using Dasync.Collections;
 namespace GrandCentralDispatch.Nodes.Remote.Unary
 {
     /// <summary>
-    /// Node which process items in parallel.
+    /// Node which process items in parallel remotely.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     internal sealed class UnaryParallelDispatcherRemoteNode<TInput> : UnaryParallelProcessor<TInput>,
@@ -141,7 +140,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Unary
                 {
                     NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
                 });
-            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
 
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
         }
@@ -180,7 +179,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Unary
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var persistentCacheToken = new CancellationTokenSource();
@@ -201,7 +200,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Unary
                     {
                         Interlocked.Increment(ref _processedItems);
                         Interlocked.Increment(ref currentProgress);
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -249,7 +248,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Unary
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var entity = item();
@@ -271,7 +270,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Unary
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
                         Interlocked.Increment(ref currentProgress);
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -317,7 +316,8 @@ namespace GrandCentralDispatch.Nodes.Remote.Unary
             if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
-            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) + Interlocked.Exchange(ref _executorProcessedItems, 0L);
+            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) +
+                                            Interlocked.Exchange(ref _executorProcessedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
             try

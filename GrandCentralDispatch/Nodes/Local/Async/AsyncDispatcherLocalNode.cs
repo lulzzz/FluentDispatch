@@ -10,11 +10,12 @@ using GrandCentralDispatch.Processors.Async;
 namespace GrandCentralDispatch.Nodes.Local.Async
 {
     /// <summary>
-    /// Node which process items in parallel.
+    /// Node which process items locally.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class AsyncDispatcherLocalNode<TInput, TOutput> : AsyncProcessor<TInput, TOutput, AsyncPredicateItem<TInput, TOutput>>,
+    internal sealed class AsyncDispatcherLocalNode<TInput, TOutput> :
+        AsyncProcessor<TInput, TOutput, AsyncPredicateItem<TInput, TOutput>>,
         IAsyncDispatcherLocalNode<TInput, TOutput>
     {
         /// <summary>
@@ -76,18 +77,19 @@ namespace GrandCentralDispatch.Nodes.Local.Async
         }
 
         /// <summary>
-        /// The bulk processor.
+        /// The processor.
         /// </summary>
         /// <param name="item"><see cref="TInput"/> to process</param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
-        protected override async Task Process(AsyncPredicateItem<TInput, TOutput> item, CancellationToken cancellationToken)
+        protected override async Task Process(AsyncPredicateItem<TInput, TOutput> item,
+            CancellationToken cancellationToken)
         {
             var policy = Policy
                 .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                 .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                     retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     (exception, sleepDuration, retry, context) =>
                     {
                         if (retry >= _clusterOptions.RetryAttempt)
@@ -105,7 +107,7 @@ namespace GrandCentralDispatch.Nodes.Local.Async
                     if (CpuUsage > _clusterOptions.LimitCpuUsage)
                     {
                         var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                        await Task.Delay((int)suspensionTime, ct);
+                        await Task.Delay((int) suspensionTime, ct);
                     }
 
                     var result = await item.Selector(item.Item);
@@ -133,17 +135,19 @@ namespace GrandCentralDispatch.Nodes.Local.Async
         }
 
         /// <summary>
-        /// Dispatch a <see cref="Func{TInput}"/> to the node.
+        /// Execute a <see cref="Func{TInput}"/> against the local node using a selector predicate.
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-        /// <param name="selector"></param>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
+        public async Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item,
+            CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await ProcessAsync(new AsyncPredicateItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
+            return await ProcessAsync(
+                new AsyncPredicateItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
         }
 
         /// <summary>

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -17,7 +16,7 @@ using GrandCentralDispatch.Processors.Unary;
 namespace GrandCentralDispatch.Nodes.Local.Unary
 {
     /// <summary>
-    /// Node which process items sequentially.
+    /// Node which process items sequentially locally.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     internal sealed class UnarySequentialDispatcherLocalNode<TInput> : UnarySequentialProcessor<TInput>,
@@ -155,7 +154,7 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var persistentCacheToken = new CancellationTokenSource();
@@ -176,7 +175,7 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
                     {
                         Interlocked.Increment(ref _processedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -224,7 +223,7 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
                         var entity = item();
@@ -246,7 +245,7 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
                     {
                         Interlocked.Increment(ref _executorProcessedItems);
                         currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -292,7 +291,8 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
             if (NodeMetrics == null) return;
             NodeMetrics.TotalItemsProcessed = TotalItemsProcessed();
             NodeMetrics.ItemsEvicted = ItemsEvicted();
-            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) + Interlocked.Exchange(ref _executorProcessedItems, 0L);
+            NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L) +
+                                            Interlocked.Exchange(ref _executorProcessedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
             NodeMetrics.RefreshSubject.OnNext(NodeMetrics.Id);

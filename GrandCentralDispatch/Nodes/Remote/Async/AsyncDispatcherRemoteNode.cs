@@ -19,7 +19,8 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class AsyncDispatcherRemoteNode<TInput, TOutput> : AsyncProcessor<TInput, TOutput, AsyncItem<TInput, TOutput>>,
+    internal sealed class AsyncDispatcherRemoteNode<TInput, TOutput> :
+        AsyncProcessor<TInput, TOutput, AsyncItem<TInput, TOutput>>,
         IAsyncDispatcherRemoteNode<TInput, TOutput>
     {
         /// <summary>
@@ -94,6 +95,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
         {
             _logger = logger;
             _clusterOptions = clusterOptions;
+
             var channel = new Channel(host.MachineName, host.Port,
                 ChannelCredentials.Insecure);
             _remoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput, TOutput>>(channel);
@@ -103,7 +105,8 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
                 {
                     NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
                 });
-            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
+
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
         }
 
@@ -119,7 +122,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
                 .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                 .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                     retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     (exception, sleepDuration, retry, context) =>
                     {
                         if (retry >= _clusterOptions.RetryAttempt)
@@ -137,7 +140,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
                     if (CpuUsage > _clusterOptions.LimitCpuUsage)
                     {
                         var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                        await Task.Delay((int)suspensionTime, ct);
+                        await Task.Delay((int) suspensionTime, ct);
                     }
 
                     var result = await _remoteContract.ProcessRemotely(item.Item, NodeMetrics);

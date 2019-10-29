@@ -7,9 +7,10 @@ using GrandCentralDispatch.Options;
 
 namespace GrandCentralDispatch.Processors.Async
 {
-    internal abstract class AsyncAbstractProcessor<TInput, TOutput, T> : Processor where T : AsyncItem<TInput, TOutput>
+    internal abstract class AsyncAbstractProcessor<TInput, TOutput, TAsync> : Processor
+        where TAsync : AsyncItem<TInput, TOutput>
     {
-        protected readonly ISubject<T> SynchronizedItemsSubject;
+        protected readonly ISubject<TAsync> SynchronizedItemsSubject;
 
         protected IDisposable ItemsSubjectSubscription;
 
@@ -17,7 +18,7 @@ namespace GrandCentralDispatch.Processors.Async
             ClusterOptions clusterOptions,
             ILogger logger) : base(circuitBreakerPolicy, clusterOptions, logger)
         {
-            ISubject<T> itemsSubject = new Subject<T>();
+            ISubject<TAsync> itemsSubject = new Subject<TAsync>();
 
             // SynchronizedItemsSubject is a thread-safe object in which we can push items concurrently
             SynchronizedItemsSubject = Subject.Synchronize(itemsSubject);
