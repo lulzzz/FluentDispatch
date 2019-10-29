@@ -7,35 +7,17 @@
     <RootNamespace>GrandCentralDispatch.Cluster</RootNamespace>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="..\packages\grpc.core\2.23.0\runtimes\win\native\grpc_csharp_ext.x64.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>grpc_csharp_ext.x64.dll</Link>
-    </Content>
-    <Content Include="..\packages\grpc.core\2.23.0\runtimes\linux\native\libgrpc_csharp_ext.x64.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>libgrpc_csharp_ext.x64.so</Link>
-    </Content>
-    <Content Include="..\packages\grpc.core\2.23.0\runtimes\osx\native\libgrpc_csharp_ext.x64.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>libgrpc_csharp_ext.x64.dylib</Link>
-    </Content>
-  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoFixture" Version="4.11.0" />
-    <PackageReference Include="MagicOnion" Version="2.6.3" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />
-    <PackageReference Include="Serilog" Version="2.9.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="3.1.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GrandCentralDispatch.Monitoring\GrandCentralDispatch.Monitoring.csproj" />
     <ProjectReference Include="..\GrandCentralDispatch.Contract\GrandCentralDispatch.Contract.csproj" />
     <ProjectReference Include="..\GrandCentralDispatch\GrandCentralDispatch.csproj" />
+    <ProjectReference Include="..\GrandCentralDispatch.Host\GrandCentralDispatch.Host.csproj">
+      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
+    </ProjectReference>
   </ItemGroup>
 </Project>

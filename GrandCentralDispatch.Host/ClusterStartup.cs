@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace GrandCentralDispatch.Host
 {
-    public abstract class Startup
+    public abstract class ClusterStartup
     {
-        protected Startup(IConfiguration configuration)
+        protected ClusterStartup(IConfiguration configuration)
         {
             Configuration = configuration;
         }

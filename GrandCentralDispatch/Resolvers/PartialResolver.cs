@@ -41,7 +41,7 @@ namespace GrandCentralDispatch.Resolvers
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
     /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-    public abstract class FuncPartialResolver<TInput, TOutput>
+    public abstract class FuncPartialResolver<TInput, TOutput> : IResolver
     {
         /// <summary>
         /// Retrieve the processing function

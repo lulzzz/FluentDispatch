@@ -9,7 +9,7 @@ namespace GrandCentralDispatch.Resolvers
     /// Resolve the processing function which will be applied to each <see cref="TInput"/>
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
-    public abstract class FuncResolver<TInput>
+    public abstract class FuncResolver<TInput> : IResolver
     {
         /// <summary>
         /// Retrieve the processing function
@@ -51,7 +51,7 @@ namespace GrandCentralDispatch.Resolvers
     /// </summary>
     /// <typeparam name="TInput1"><see cref="TInput1"/></typeparam>
     /// <typeparam name="TInput2"><see cref="TInput2"/></typeparam>
-    public abstract class FuncResolver<TInput1, TInput2>
+    public abstract class FuncResolver<TInput1, TInput2> : IResolver
     {
         /// <summary>
         /// Retrieve the processing function

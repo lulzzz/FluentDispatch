@@ -10,7 +10,7 @@ using GrandCentralDispatch.Sample.Web.Resolvers;
 
 namespace GrandCentralDispatch.Sample.Web
 {
-    public class Startup : Host.Startup
+    public class Startup : Host.ClusterStartup
     {
         public Startup(IConfiguration configuration) : base(configuration)
         {
