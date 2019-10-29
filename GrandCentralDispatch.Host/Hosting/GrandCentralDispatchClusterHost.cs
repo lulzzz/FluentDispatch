@@ -17,7 +17,8 @@ namespace GrandCentralDispatch.Host.Hosting
         /// Initializes a new instance of the <see cref="IHostBuilder"/> class with pre-configured defaults.
         /// </summary>
         /// <returns>The initialized <see cref="IHostBuilder"/>.</returns>
-        public static IHostBuilder CreateDefaultBuilder(bool useSimpleConsoleLogger = true, bool enableMonitoring = false, int? port = null) =>
+        public static IHostBuilder CreateDefaultBuilder(bool useSimpleConsoleLogger = true,
+            bool enableMonitoring = false, int? port = null) =>
             CreateDefaultBuilder(useSimpleConsoleLogger, LogLevel.Debug, enableMonitoring, port);
 
         /// <summary>
@@ -26,7 +27,7 @@ namespace GrandCentralDispatch.Host.Hosting
         /// <param name="useSimpleConsoleLogger"></param>
         /// <param name="minSimpleConsoleLoggerLogLevel"></param>
         /// <param name="port"></param>
-        /// <param name="enableMonitoring">Enable Grafana monitoring (required InfluxDb running locally)</param>
+        /// <param name="enableMonitoring">Enable Grafana monitoring (requires InfluxDb running locally)</param>
         /// <returns>The initialized <see cref="IHostBuilder"/>.</returns>
         public static IHostBuilder CreateDefaultBuilder(bool useSimpleConsoleLogger,
             LogLevel minSimpleConsoleLoggerLogLevel, bool enableMonitoring, int? port = null)
@@ -61,10 +62,11 @@ namespace GrandCentralDispatch.Host.Hosting
                     }
                     else
                     {
-                        var listeningPort = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_CLUSTER_LISTENING_PORT"))
+                        var listeningPort =
+                            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_CLUSTER_LISTENING_PORT"))
                                 ? (int.TryParse(Environment.GetEnvironmentVariable("GCD_CLUSTER_LISTENING_PORT"),
-                                    out var port)
-                                    ? port
+                                    out var parsedPort)
+                                    ? parsedPort
                                     : hostingContext.Configuration.GetValue<int>("GCD_CLUSTER_LISTENING_PORT"))
                                 : hostingContext.Configuration.GetValue<int>("GCD_CLUSTER_LISTENING_PORT");
                         options.Listen(IPAddress.Any, listeningPort);
@@ -152,60 +154,61 @@ namespace GrandCentralDispatch.Host.Hosting
             else
             {
                 var basePath =
-            $@"{Directory.GetParent(Assembly.GetExecutingAssembly().Location)}\logs";
+                    $@"{Directory.GetParent(Assembly.GetExecutingAssembly().Location)}\logs";
                 if (!Directory.Exists(basePath))
                 {
                     Directory.CreateDirectory(basePath);
                 }
+
                 switch (minSimpleConsoleLoggerLogLevel)
                 {
                     case LogLevel.Trace:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Verbose()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Debug:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Debug()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Information:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Information()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Warning:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Warning()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Error:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Error()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Critical:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Fatal()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     default:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Information()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                 }

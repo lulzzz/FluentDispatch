@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Net;
 using System.Reflection;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -31,6 +30,7 @@ namespace GrandCentralDispatch.Host.Hosting
         /// </summary>
         /// <param name="useSimpleConsoleLogger"></param>
         /// <param name="minSimpleConsoleLoggerLogLevel"></param>
+        /// <param name="resolvers"></param>
         /// <returns>The initialized <see cref="IHostBuilder"/>.</returns>
         public static IHostBuilder CreateDefaultBuilder(
             bool useSimpleConsoleLogger,
@@ -48,36 +48,37 @@ namespace GrandCentralDispatch.Host.Hosting
             configurationBuilder.AddEnvironmentVariables();
             var configuration = configurationBuilder.Build();
             builder.UseMagicOnion(
-                     new List<ServerPort>
-                     {
-                        new ServerPort(IPAddress.Any.ToString(),
-                            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_NODE_LISTENING_PORT"))
-                                ? (int.TryParse(Environment.GetEnvironmentVariable("GCD_NODE_LISTENING_PORT"),
-                                    out var port)
-                                    ? port
-                                    : configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"))
-                                : configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"), ServerCredentials.Insecure)
-                     },
-                     new MagicOnionOptions(true)
-                     {
-                         MagicOnionLogger = new MagicOnionLogToGrpcLogger()
-                     },
-                     types: resolvers.Select(resolver =>
-                     {
-                         var targetType = typeof(IResolver);
-                         if (!targetType.GetTypeInfo().IsAssignableFrom(resolver.GetTypeInfo()))
-                         {
-                             throw new ArgumentException(nameof(resolver), $"Type {resolver.Name} should implement IResolver interface.");
-                         }
+                new List<ServerPort>
+                {
+                    new ServerPort(IPAddress.Any.ToString(),
+                        !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GCD_NODE_LISTENING_PORT"))
+                            ? (int.TryParse(Environment.GetEnvironmentVariable("GCD_NODE_LISTENING_PORT"),
+                                out var port)
+                                ? port
+                                : configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"))
+                            : configuration.GetValue<int>("GCD_NODE_LISTENING_PORT"), ServerCredentials.Insecure)
+                },
+                new MagicOnionOptions(true)
+                {
+                    MagicOnionLogger = new MagicOnionLogToGrpcLogger()
+                },
+                types: resolvers.Select(resolver =>
+                {
+                    var targetType = typeof(IResolver);
+                    if (!targetType.GetTypeInfo().IsAssignableFrom(resolver.GetTypeInfo()))
+                    {
+                        throw new ArgumentException(nameof(resolver),
+                            $"Type {resolver.Name} should implement IResolver interface.");
+                    }
 
-                         return resolver;
-                     }).Concat(new[]
-                     {
-                        typeof(Hubs.Hub.NodeHub)
-                     }));
+                    return resolver;
+                }).Concat(new[]
+                {
+                    typeof(Hubs.Hub.NodeHub)
+                }));
             builder.ConfigureServices(serviceCollection =>
             {
-                var startup = (TStartup)Activator.CreateInstance(typeof(TStartup), configuration);
+                var startup = (TStartup) Activator.CreateInstance(typeof(TStartup), configuration);
                 startup.ConfigureServices(serviceCollection);
             });
 
@@ -158,60 +159,61 @@ namespace GrandCentralDispatch.Host.Hosting
             else
             {
                 var basePath =
-            $@"{Directory.GetParent(Assembly.GetExecutingAssembly().Location)}\logs";
+                    $@"{Directory.GetParent(Assembly.GetExecutingAssembly().Location)}\logs";
                 if (!Directory.Exists(basePath))
                 {
                     Directory.CreateDirectory(basePath);
                 }
+
                 switch (minSimpleConsoleLoggerLogLevel)
                 {
                     case LogLevel.Trace:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Verbose()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Debug:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Debug()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Information:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Information()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Warning:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Warning()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Error:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Error()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     case LogLevel.Critical:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Fatal()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                     default:
                         builder.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                             .MinimumLevel.Information()
                             .Enrich.FromLogContext()
-                                .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
+                            .WriteTo.File($@"{basePath}\log_.txt", rollingInterval: RollingInterval.Day, shared: true)
                         );
                         break;
                 }
