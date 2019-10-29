@@ -1042,8 +1042,8 @@ namespace GrandCentralDispatch.Clusters
         /// <see cref="Cluster{TInput1, TInput2, TOutput2, TOutput2}"/>
         /// </summary>
         /// <param name="resolverCache"><see cref="IMemoryCache"/></param>
-        /// <param name="item1PartialResolver"><see cref="FuncPartialResolver{TInput2,TOutput2}"/></param>
-        /// <param name="item2PartialResolver"><see cref="FuncPartialResolver{TInput2,TOutput2}"/></param>
+        /// <param name="item1PartialResolver"><see cref="PartialResolver{TInput1,TOutput1}"/></param>
+        /// <param name="item2PartialResolver"><see cref="PartialResolver{TInput2,TOutput2}"/></param>
         /// <param name="dualResolver"><see cref="DualResolver{TOutput1,TOutput2}"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
@@ -1060,8 +1060,35 @@ namespace GrandCentralDispatch.Clusters
             IProgress<double> progress = null,
             CancellationTokenSource cts = null,
             ILoggerFactory loggerFactory = null) :
-            this(resolverCache, item1PartialResolver, item2PartialResolver, dualResolver,
+            this(resolverCache,
                 progress, cts,
+                clusterOptions.Value,
+                circuitBreakerOptions.Value,
+                loggerFactory,
+                item1PartialResolver,
+                item2PartialResolver,
+                dualResolver)
+        {
+
+        }
+
+        /// <summary>
+        /// <see cref="Cluster{TInput1, TInput2, TOutput2, TOutput2}"/>
+        /// </summary>
+        /// <param name="resolverCache"><see cref="IMemoryCache"/></param>
+        /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
+        /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
+        /// <param name="progress"><see cref="Progress{TInput1}"/></param>
+        /// <param name="cts"><see cref="CancellationTokenSource"/></param>
+        /// <param name="loggerFactory"><see cref="ILoggerFactory"/></param>
+        public Cluster(
+            IMemoryCache resolverCache,
+            IOptions<ClusterOptions> clusterOptions,
+            IOptions<CircuitBreakerOptions> circuitBreakerOptions,
+            IProgress<double> progress = null,
+            CancellationTokenSource cts = null,
+            ILoggerFactory loggerFactory = null) :
+            this(resolverCache, progress, cts,
                 clusterOptions.Value,
                 circuitBreakerOptions.Value,
                 loggerFactory)
@@ -1073,24 +1100,24 @@ namespace GrandCentralDispatch.Clusters
         /// <see cref="Cluster{TInput1, TInput2, TOutput2, TOutput2}"/>
         /// </summary>
         /// <param name="resolverCache"><see cref="IMemoryCache"/></param>
-        /// <param name="item1PartialResolver">Resolve the action to execute asynchronously for each items when they are dequeued.</param>
-        /// <param name="item2PartialResolver">Resolve the action to execute asynchronously for each items when they are dequeued.</param>
-        /// <param name="dualResolver">Resolve the action to execute asynchronously for each items when they are dequeued.</param>
         /// <param name="progress">Progress of the current bulk</param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
         /// <param name="loggerFactory"><see cref="ILoggerFactory"/></param>
+        /// <param name="item1PartialResolver">Resolve the action to execute asynchronously for each items when they are dequeued.</param>
+        /// <param name="item2PartialResolver">Resolve the action to execute asynchronously for each items when they are dequeued.</param>
+        /// <param name="dualResolver">Resolve the action to execute asynchronously for each items when they are dequeued.</param>
         private Cluster(
             IMemoryCache resolverCache,
-            FuncPartialResolver<TInput1, TOutput1> item1PartialResolver,
-            FuncPartialResolver<TInput2, TOutput2> item2PartialResolver,
-            FuncResolver<TOutput1, TOutput2> dualResolver,
             IProgress<double> progress,
             CancellationTokenSource cts,
             ClusterOptions clusterOptions,
             CircuitBreakerOptions circuitBreakerOptions,
-            ILoggerFactory loggerFactory) : base(progress, cts, clusterOptions,
+            ILoggerFactory loggerFactory,
+            FuncPartialResolver<TInput1, TOutput1> item1PartialResolver = null,
+            FuncPartialResolver<TInput2, TOutput2> item2PartialResolver = null,
+            FuncResolver<TOutput1, TOutput2> dualResolver = null) : base(progress, cts, clusterOptions,
             loggerFactory == null
                 ? NullLogger<Cluster<TInput1, TInput2, TOutput1, TOutput2>>.Instance
                 : loggerFactory.CreateLogger<Cluster<TInput1, TInput2, TOutput1, TOutput2>>(), loggerFactory)
@@ -1153,9 +1180,9 @@ namespace GrandCentralDispatch.Clusters
                             _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>) Activator.CreateInstance(
                                 typeof(DualParallelDispatcherLocalNode<TInput1, TInput2, TOutput1, TOutput2>),
                                 PersistentCache,
-                                item1PartialResolver.GetItemFunc(),
-                                item2PartialResolver.GetItemFunc(),
-                                dualResolver.GetItemFunc(),
+                                item1PartialResolver?.GetItemFunc(),
+                                item2PartialResolver?.GetItemFunc(),
+                                dualResolver?.GetItemFunc(),
                                 Progress,
                                 CancellationTokenSource,
                                 circuitBreakerOptions,
@@ -1167,9 +1194,9 @@ namespace GrandCentralDispatch.Clusters
                             _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>) Activator.CreateInstance(
                                 typeof(DualSequentialDispatcherLocalNode<TInput1, TInput2, TOutput1, TOutput2>),
                                 PersistentCache,
-                                item1PartialResolver.GetItemFunc(),
-                                item2PartialResolver.GetItemFunc(),
-                                dualResolver.GetItemFunc(),
+                                item1PartialResolver?.GetItemFunc(),
+                                item2PartialResolver?.GetItemFunc(),
+                                dualResolver?.GetItemFunc(),
                                 Progress,
                                 CancellationTokenSource,
                                 circuitBreakerOptions,
