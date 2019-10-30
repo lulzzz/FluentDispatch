@@ -62,10 +62,23 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Cluster Throughput",
-          "groupBy": [],
+          "alias": "Cluster Throughput (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "hide": false,
-          "measurement": "application__cluster_throughput",
+          "measurement": "cluster__cluster_throughput",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -166,8 +179,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Monitor Lock Contention Count",
-          "groupBy": [],
+          "alias": "Monitor Lock Contention Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__monitor_lock_contention_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -269,8 +295,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "ThreadPool Completed Work Item Count",
-          "groupBy": [],
+          "alias": "ThreadPool Completed Work Item Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__threadpool_completed_work_item_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -372,8 +411,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "ThreadPool Queue Length",
-          "groupBy": [],
+          "alias": "ThreadPool Queue Length (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__threadpool_queue_length",
           "orderByTime": "ASC",
           "policy": "default",
@@ -475,8 +527,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "CPU Usage",
-          "groupBy": [],
+          "alias": "CPU Usage (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__cpu_usage",
           "orderByTime": "ASC",
           "policy": "default",
@@ -578,8 +643,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "GC Heap Size",
-          "groupBy": [],
+          "alias": "GC Heap Size (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gc_heap_size",
           "orderByTime": "ASC",
           "policy": "default",
@@ -681,8 +759,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Allocation Rate",
-          "groupBy": [],
+          "alias": "Allocation Rate (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__allocation_rate",
           "orderByTime": "ASC",
           "policy": "default",
@@ -784,8 +875,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "LOH Size",
-          "groupBy": [],
+          "alias": "LOH Size (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__loh_size",
           "orderByTime": "ASC",
           "policy": "default",
@@ -887,8 +991,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Gen 0 Size",
-          "groupBy": [],
+          "alias": "Gen 0 Size (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gen_0_size",
           "orderByTime": "ASC",
           "policy": "default",
@@ -990,8 +1107,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Gen 1 Size",
-          "groupBy": [],
+          "alias": "Gen 1 Size (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gen_1_size",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1093,8 +1223,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Gen 2 Size",
-          "groupBy": [],
+          "alias": "Gen 2 Size (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gen_2_size",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1196,8 +1339,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Gen 0 GC Count",
-          "groupBy": [],
+          "alias": "Gen 0 GC Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gen_0_gc_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1299,8 +1455,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Gen 1 GC Count",
-          "groupBy": [],
+          "alias": "Gen 1 GC Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gen_1_gc_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1402,8 +1571,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Gen 2 GC Count",
-          "groupBy": [],
+          "alias": "Gen 2 GC Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__gen_2_gc_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1505,8 +1687,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "% Time in GC since last GC",
-          "groupBy": [],
+          "alias": "% Time in GC since last GC (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__%_time_in_gc_since_last_gc",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1608,8 +1803,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Working Set",
-          "groupBy": [],
+          "alias": "Working Set (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__working_set",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1711,8 +1919,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "ThreadPool Thread Count",
-          "groupBy": [],
+          "alias": "ThreadPool Thread Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__threadpool_thread_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1814,8 +2035,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Number of Assemblies Loaded",
-          "groupBy": [],
+          "alias": "Number of Assemblies Loaded (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__number_of_assemblies_loaded",
           "orderByTime": "ASC",
           "policy": "default",
@@ -1917,8 +2151,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Number of Active Timers",
-          "groupBy": [],
+          "alias": "Number of Active Timers (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__number_of_active_timers",
           "orderByTime": "ASC",
           "policy": "default",
@@ -2020,8 +2267,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Exception Count",
-          "groupBy": [],
+          "alias": "Exception Count (Cluster name: $tag_machine_name - Cluster guid: $tag_cluster_id)",
+          "groupBy": [
+            {
+              "params": [
+                "machine_name"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "cluster_id"
+              ],
+              "type": "tag"
+            }
+          ],
           "measurement": "cluster__exception_count",
           "orderByTime": "ASC",
           "policy": "default",
@@ -2121,5 +2381,5 @@
   "timezone": "",
   "title": "Cluster Health",
   "uid": "QZgvLaGWz",
-  "version": 1
+  "version": 2
 }

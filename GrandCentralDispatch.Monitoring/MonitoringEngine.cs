@@ -39,9 +39,12 @@ namespace GrandCentralDispatch.Monitoring
                         (h => exposedMetric.ClusterMetricSubmitted += h, h => exposedMetric.ClusterMetricSubmitted -= h)
                     .Subscribe(onClusterMetric =>
                     {
-                        SetClusterThroughput(onClusterMetric.EventArgs.ClusterMetrics.CurrentThroughput);
-                        SetClusterPerformanceCounters(onClusterMetric.EventArgs.ClusterMetrics.Health
-                            .PerformanceCounters);
+                        var clusterMetrics = onClusterMetric.EventArgs.ClusterMetrics;
+                        SetClusterThroughput(clusterMetrics.Id, clusterMetrics.Health.MachineName,
+                            clusterMetrics.CurrentThroughput);
+                        SetClusterPerformanceCounters(clusterMetrics.Id, clusterMetrics.Health.MachineName,
+                            clusterMetrics.Health
+                                .PerformanceCounters);
                     });
 
                 var nodeMetricSubscription = Observable
@@ -72,9 +75,19 @@ namespace GrandCentralDispatch.Monitoring
             }
         }
 
-        private void SetClusterThroughput(double throughput)
+        private void SetClusterThroughput(Guid guid, string machineName, double throughput)
         {
-            _metrics?.Measure.Histogram.Update(MetricsRegistry.ClusterThroughput, Convert.ToInt64(throughput));
+            var tags = new MetricTags(new[] {"cluster_id", "machine_name"}, new[] {guid.ToString(), machineName});
+            var histogram = new HistogramOptions
+            {
+                Context = "cluster",
+                Tags = tags,
+                Name = "Cluster Throughput",
+                Reservoir = () => new DefaultAlgorithmRReservoir(),
+                MeasurementUnit = Unit.None
+            };
+
+            _metrics?.Measure.Histogram.Update(histogram, Convert.ToInt64(throughput));
         }
 
         private void SetNodeThroughput(Guid guid, string machineName, double throughput)
@@ -136,27 +149,41 @@ namespace GrandCentralDispatch.Monitoring
             _metrics?.Measure.Histogram.Update(histogram, itemsEvicted);
         }
 
-        private void SetClusterPerformanceCounters(IDictionary<string, float> performanceCounters)
+        private void SetClusterPerformanceCounters(Guid guid, string machineName,
+            IDictionary<string, float> performanceCounters)
         {
+            if (!MetricsRegistry.ClusterPerformanceCounters.Any() ||
+                MetricsRegistry.ClusterPerformanceCounters.All(counter => counter.Key != guid))
+            {
+                MetricsRegistry.ClusterPerformanceCounters.TryAdd(guid,
+                    new ConcurrentHashSet<HistogramOptions>(
+                        KeyBasedEqualityComparer<HistogramOptions>.Create(x => x.Name)));
+            }
+
+            var clusterPerformanceCounters =
+                MetricsRegistry.ClusterPerformanceCounters.Single(cluster => cluster.Key == guid);
             foreach (var performanceCounter in performanceCounters)
             {
-                if (MetricsRegistry.ClusterPerformanceCounters.All(counter => counter.Name != performanceCounter.Key))
+                if (clusterPerformanceCounters.Value.All(counter => counter.Name != performanceCounter.Key))
                 {
+                    var tags = new MetricTags(new[] {"cluster_id", "machine_name"},
+                        new[] {guid.ToString(), machineName});
                     var histogram = new HistogramOptions
                     {
-                        Context = "Cluster",
+                        Context = "cluster",
+                        Tags = tags,
                         Name = performanceCounter.Key,
                         Reservoir = () => new DefaultAlgorithmRReservoir(),
                         MeasurementUnit = Unit.None
                     };
 
-                    MetricsRegistry.ClusterPerformanceCounters.Add(histogram);
+                    clusterPerformanceCounters.Value.Add(histogram);
                     _metrics?.Measure.Histogram.Update(histogram, Convert.ToInt64(performanceCounter.Value));
                 }
                 else
                 {
                     var histogram =
-                        MetricsRegistry.ClusterPerformanceCounters.Single(counter =>
+                        clusterPerformanceCounters.Value.Single(counter =>
                             counter.Name == performanceCounter.Key);
                     _metrics?.Measure.Histogram.Update(histogram, Convert.ToInt64(performanceCounter.Value));
                 }

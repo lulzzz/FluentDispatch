@@ -6,10 +6,16 @@ namespace GrandCentralDispatch.Models
 {
     public class ClusterHealth
     {
+        /// <summary>
+        /// Machine name
+        /// </summary>
+        public string MachineName { get; }
+
         public ConcurrentDictionary<string, float> PerformanceCounters { get; }
 
         public ClusterHealth()
         {
+            MachineName = Environment.MachineName;
             PerformanceCounters = new ConcurrentDictionary<string, float>();
         }
 
