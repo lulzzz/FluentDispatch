@@ -2,21 +2,28 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Dasync.Collections;
 using Microsoft.Extensions.Logging;
 using Polly;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Options;
 using GrandCentralDispatch.Processors.Async;
+using GrandCentralDispatch.Remote;
+using GrandCentralDispatch.Hubs.Hub;
+using MagicOnion.Client;
+using Grpc.Core;
+using GrandCentralDispatch.Hubs.Receiver;
 
-namespace GrandCentralDispatch.Nodes.Async
+namespace GrandCentralDispatch.Nodes.Remote.Async
 {
     /// <summary>
-    /// Node which process items sequentially.
+    /// Node which process items in parallel remotely.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class AsyncSequentialDispatcherNode<TInput, TOutput> : AsyncParallelProcessor<TInput, TOutput>,
-        IAsyncDispatcherNode<TInput, TOutput>
+    internal sealed class AsyncParallelDispatcherRemoteNode<TInput, TOutput> :
+        AsyncParallelProcessor<TInput, TOutput, AsyncItem<TInput, TOutput>>,
+        IAsyncDispatcherQueueRemoteNode<TInput, TOutput>
     {
         /// <summary>
         /// <see cref="ILogger"/>
@@ -29,6 +36,16 @@ namespace GrandCentralDispatch.Nodes.Async
         private readonly ClusterOptions _clusterOptions;
 
         /// <summary>
+        /// <see cref="IRemoteContract{TInput}"/>
+        /// </summary>
+        private readonly IOutputRemoteContract<TInput, TOutput> _remoteContract;
+
+        /// <summary>
+        /// <see cref="INodeHub"/>
+        /// </summary>
+        private readonly INodeHub _nodeHub;
+
+        /// <summary>
         /// <see cref="IDisposable"/>
         /// </summary>
         private bool _disposed;
@@ -39,14 +56,21 @@ namespace GrandCentralDispatch.Nodes.Async
         private long _processedItems;
 
         /// <summary>
-        /// <see cref="AsyncSequentialDispatcherNode{TInput,TOutput}"/>
+        /// <see cref="IDisposable"/>
         /// </summary>
+        private readonly IDisposable _remoteNodeHealthSubscription;
+
+        /// <summary>
+        /// <see cref="AsyncParallelDispatcherRemoteNode{TInput,TOutput}"/>
+        /// </summary>
+        /// <param name="host"><see cref="Host"/></param>
         /// <param name="progress">Progress of the current bulk</param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="logger"><see cref="ILogger"/></param>
-        public AsyncSequentialDispatcherNode(
+        public AsyncParallelDispatcherRemoteNode(
+            Host host,
             IProgress<double> progress,
             CancellationTokenSource cts,
             CircuitBreakerOptions circuitBreakerOptions,
@@ -75,6 +99,16 @@ namespace GrandCentralDispatch.Nodes.Async
         {
             _logger = logger;
             _clusterOptions = clusterOptions;
+            var channel = new Channel(host.MachineName, host.Port,
+                ChannelCredentials.Insecure);
+            _remoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput, TOutput>>(channel);
+            IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
+            _remoteNodeHealthSubscription =
+                nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
+                {
+                    NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
+                });
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
         }
 
@@ -89,7 +123,7 @@ namespace GrandCentralDispatch.Nodes.Async
             CancellationToken cancellationToken)
         {
             var currentProgress = 0;
-            foreach (var item in bulk)
+            await bulk.ParallelForEachAsync(async item =>
             {
                 var policy = Policy
                     .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
@@ -113,11 +147,11 @@ namespace GrandCentralDispatch.Nodes.Async
                         if (CpuUsage > _clusterOptions.LimitCpuUsage)
                         {
                             var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                            await Task.Delay((int)suspensionTime, ct);
+                            await Task.Delay((int) suspensionTime, ct);
                         }
 
-                        var result = await item.Selector(item.Item);
-                        item.TaskCompletionSource.SetResult(result);
+                        var result = await _remoteContract.ProcessRemotely(item.Item, NodeMetrics);
+                        item.TaskCompletionSource.TrySetResult(result);
                     }
                     catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                     {
@@ -127,8 +161,8 @@ namespace GrandCentralDispatch.Nodes.Async
                     finally
                     {
                         Interlocked.Increment(ref _processedItems);
-                        currentProgress++;
-                        progress.Report(currentProgress / bulk.Count);
+                        Interlocked.Increment(ref currentProgress);
+                        progress.Report((double) currentProgress / bulk.Count);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
@@ -140,21 +174,20 @@ namespace GrandCentralDispatch.Nodes.Async
                             ? $"Could not process item: {policyResult.FinalException.Message}."
                             : "An error has occured while processing the item.");
                 }
-            }
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Dispatch a <see cref="Func{TInput}"/> to the node.
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-        /// <param name="selector"></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken)
+        public async Task<TOutput> DispatchAsync(TInput item, CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await AddAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
+            return await AddAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, item, cancellationToken));
         }
 
         /// <summary>
@@ -174,6 +207,19 @@ namespace GrandCentralDispatch.Nodes.Async
             NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L);
             NodeMetrics.BufferSize = GetBufferSize();
             NodeMetrics.Full = IsFull();
+            try
+            {
+                if (_nodeHub == null) return;
+                await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
+                NodeMetrics.Alive = true;
+                _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
+            }
+            catch (Exception ex)
+            {
+                NodeMetrics.Alive = false;
+                _logger.LogWarning(ex.Message);
+            }
+
             NodeMetrics.RefreshSubject.OnNext(NodeMetrics.Id);
         }
 
@@ -185,6 +231,11 @@ namespace GrandCentralDispatch.Nodes.Async
         {
             if (_disposed)
                 return;
+
+            if (disposing)
+            {
+                _remoteNodeHealthSubscription?.Dispose();
+            }
 
             _disposed = true;
             base.Dispose(disposing);

@@ -34,7 +34,7 @@ namespace GrandCentralDispatch.Processors.Unary
             ISubject<TInput> itemsSubject = new Subject<TInput>();
             ISubject<Func<TInput>> itemsExecutorSubject = new Subject<Func<TInput>>();
 
-            // _synchronized is a thread-safe object in which we can push items concurrently
+            // SynchronizedItems are thread-safe objects in which we can push items concurrently
             SynchronizedItemsSubject = Subject.Synchronize(itemsSubject);
             SynchronizedItemsExecutorSubject = Subject.Synchronize(itemsExecutorSubject);
         }
@@ -85,13 +85,13 @@ namespace GrandCentralDispatch.Processors.Unary
         /// Indicates if current processor is full.
         /// </summary>
         /// <returns>True if full</returns>
-        protected bool IsFull() => ItemsBuffer.Count >= ClusterOptions.NodeThrottling;
+        protected bool IsFull() => ItemsBuffer.Count + ItemsExecutorBuffer.Count >= ClusterOptions.NodeThrottling;
 
         /// <summary>
         /// Get current buffer size
         /// </summary>
         /// <returns>Buffer size</returns>
-        protected int GetBufferSize() => ItemsBuffer.Count;
+        protected int GetBufferSize() => ItemsBuffer.Count + ItemsExecutorBuffer.Count;
 
         /// <summary>
         /// Dispose timer

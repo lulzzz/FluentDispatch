@@ -49,7 +49,7 @@ namespace GrandCentralDispatch.Processors.Dual
             ISubject<LinkedItem<TInput2>> items2Subject = new Subject<LinkedItem<TInput2>>();
             ISubject<LinkedFuncItem<TInput2>> items2ExecutorSubject = new Subject<LinkedFuncItem<TInput2>>();
 
-            // _synchronized is a thread-safe object in which we can push items concurrently
+            // SynchronizedItems are thread-safe objects in which we can push items concurrently
             SynchronizedItems1Subject = Subject.Synchronize(items1Subject);
             SynchronizedItems1ExecutorSubject = Subject.Synchronize(items1ExecutorSubject);
             SynchronizedItems2Subject = Subject.Synchronize(items2Subject);
@@ -144,13 +144,16 @@ namespace GrandCentralDispatch.Processors.Dual
         /// Indicates if current processor is full.
         /// </summary>
         /// <returns>True if full</returns>
-        protected bool IsFull() => Items1Buffer.Count + Items2Buffer.Count >= ClusterOptions.NodeThrottling;
+        protected bool IsFull() =>
+            Items1Buffer.Count + Items2Buffer.Count + Items1ExecutorBuffer.Count + Items2ExecutorBuffer.Count >=
+            ClusterOptions.NodeThrottling;
 
         /// <summary>
         /// Get current buffer size
         /// </summary>
         /// <returns>Buffer size</returns>
-        protected int GetBufferSize() => Items1Buffer.Count + Items2Buffer.Count;
+        protected int GetBufferSize() => Items1Buffer.Count + Items2Buffer.Count + Items1ExecutorBuffer.Count +
+                                         Items2ExecutorBuffer.Count;
 
         /// <summary>
         /// Dispose timer

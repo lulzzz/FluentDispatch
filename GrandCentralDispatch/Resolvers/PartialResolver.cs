@@ -6,7 +6,7 @@ using GrandCentralDispatch.Models;
 namespace GrandCentralDispatch.Resolvers
 {
     /// <summary>
-    /// Generic resolver which enable overriding the default behavior for each incoming new item
+    /// Generic resolver which enable overriding the default behavior for each new incoming item
     /// </summary>
     /// <typeparam name="TPartial1"><see cref="TPartial1"/></typeparam>
     /// <typeparam name="TPartial2"><see cref="TPartial2"/></typeparam>
@@ -22,7 +22,7 @@ namespace GrandCentralDispatch.Resolvers
         }
 
         /// <summary>
-        /// Override this method to apply a specific process to each incoming item
+        /// Override this method to apply a specific process to each item
         /// </summary>
         /// <param name="item"><see cref="TPartial1"/></param>
         /// <param name="nodeMetrics"><see cref="NodeMetrics"/></param>
@@ -31,7 +31,7 @@ namespace GrandCentralDispatch.Resolvers
         protected virtual Task<TPartial2> Process(TPartial1 item, NodeMetrics nodeMetrics,
             CancellationToken cancellationToken)
         {
-            return null;
+            throw new NotImplementedException();
         }
     }
 
@@ -41,7 +41,7 @@ namespace GrandCentralDispatch.Resolvers
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
     /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-    public abstract class FuncPartialResolver<TInput, TOutput>
+    public abstract class FuncPartialResolver<TInput, TOutput> : IResolver
     {
         /// <summary>
         /// Retrieve the processing function

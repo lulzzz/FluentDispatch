@@ -1,14 +1,14 @@
 ﻿using System;
 using GrandCentralDispatch.Models;
 
-namespace GrandCentralDispatch.Nodes.Dual
+namespace GrandCentralDispatch.Nodes.Remote.Dual
 {
     /// <summary>
-    /// Node which process items.
+    /// Node which process items remotely.
     /// </summary>
     /// <typeparam name="TInput1"></typeparam>
     /// <typeparam name="TInput2"></typeparam>
-    internal interface IDualDispatcherNode<TInput1, TInput2> : IDisposable
+    internal interface IDualDispatcherRemoteNode<TInput1, TInput2> : IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="TInput1"/> to the node.

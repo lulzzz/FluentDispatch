@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 using GrandCentralDispatch.Host.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 namespace GrandCentralDispatch.Sample.Web
 {
@@ -9,7 +9,8 @@ namespace GrandCentralDispatch.Sample.Web
     {
         public static async Task Main(string[] args)
         {
-            var host = GrandCentralDispatchHost<Startup>.CreateDefaultBuilder(true, LogLevel.Information, 5000, false)
+            var host = GrandCentralDispatchClusterHost<Startup>
+                .CreateDefaultBuilder(true, LogLevel.Information, false, 5000)
                 .Build();
             await host.RunAsync();
         }

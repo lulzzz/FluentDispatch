@@ -40,6 +40,12 @@
 
   <ItemGroup>
     <Folder Include="Nodes\Remote\" />
-    <Folder Include="Processors\Remote\" />
+    <Folder Include="Nodes\Local\" />
+    <Folder Include="Nodes\Local\Async\" />
+    <Folder Include="Nodes\Local\Dual\" />
+    <Folder Include="Nodes\Local\Unary\" />
+    <Folder Include="Nodes\Remote\Async\" />
+    <Folder Include="Nodes\Remote\Dual\" />
+    <Folder Include="Nodes\Remote\Unary\" />
   </ItemGroup>
 </Project>

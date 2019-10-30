@@ -3,23 +3,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Models;
 
-namespace GrandCentralDispatch.Nodes.Remote
+namespace GrandCentralDispatch.Nodes.Local.Async
 {
     /// <summary>
     /// Node which process items.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal interface IRemoteNode<TInput, TOutput> : IDisposable
+    internal interface IAsyncDispatcherQueueLocalNode<TInput, TOutput> : IDisposable
     {
         /// <summary>
-        /// Execute a <see cref="Func{TInput}"/> against a remote the node.
+        /// Dispatch a <see cref="Func{TInput}"/> to the local node using a selector predicate.
         /// </summary>
         /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
+        /// <param name="selector"><see cref="Func{TResult}"/></param>
         /// <param name="item"><see cref="TInput"/></param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
-        Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken);
+        Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item, CancellationToken cancellationToken);
 
         /// <summary>
         /// <see cref="NodeMetrics"/>

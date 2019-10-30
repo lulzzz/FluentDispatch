@@ -4,6 +4,7 @@ EXPOSE 5432
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.0-buster AS build
 WORKDIR /src
+COPY ["GrandCentralDispatch.Host/GrandCentralDispatch.Host.csproj", "GrandCentralDispatch.Host/"]
 COPY ["GrandCentralDispatch.Cluster/GrandCentralDispatch.Cluster.csproj", "GrandCentralDispatch.Cluster/"]
 COPY ["GrandCentralDispatch.Contract/GrandCentralDispatch.Contract.csproj", "GrandCentralDispatch.Contract/"]
 COPY ["GrandCentralDispatch/GrandCentralDispatch.csproj", "GrandCentralDispatch/"]

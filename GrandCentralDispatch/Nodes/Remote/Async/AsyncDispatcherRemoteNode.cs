@@ -10,18 +10,18 @@ using MagicOnion.Client;
 using GrandCentralDispatch.Hubs.Receiver;
 using GrandCentralDispatch.Hubs.Hub;
 using GrandCentralDispatch.Remote;
-using GrandCentralDispatch.Processors.Remote;
-using GrandCentralDispatch.Exceptions;
+using GrandCentralDispatch.Processors.Async;
 
-namespace GrandCentralDispatch.Nodes.Remote
+namespace GrandCentralDispatch.Nodes.Remote.Async
 {
     /// <summary>
     /// Node which process items remotely.
     /// </summary>
     /// <typeparam name="TInput">Item to be processed</typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal sealed class RemoteNode<TInput, TOutput> : RemoteProcessor<TInput, TOutput>,
-        IRemoteNode<TInput, TOutput>
+    internal sealed class AsyncDispatcherRemoteNode<TInput, TOutput> :
+        AsyncProcessor<TInput, TOutput, AsyncItem<TInput, TOutput>>,
+        IAsyncDispatcherRemoteNode<TInput, TOutput>
     {
         /// <summary>
         /// <see cref="ILogger"/>
@@ -59,19 +59,19 @@ namespace GrandCentralDispatch.Nodes.Remote
         private long _processedItems;
 
         /// <summary>
-        /// <see cref="RemoteNode{TInput,TOutput}"/>
+        /// <see cref="AsyncDispatcherRemoteNode{TInput,TOutput}"/>
         /// </summary>
+        /// <param name="host"><see cref="Host"/></param>
         /// <param name="cts"><see cref="CancellationTokenSource"/></param>
         /// <param name="circuitBreakerOptions"><see cref="CircuitBreakerOptions"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
         /// <param name="logger"><see cref="ILogger"/></param>
-        /// <param name="host"><see cref="Host"/></param>
-        public RemoteNode(
+        public AsyncDispatcherRemoteNode(
+            Host host,
             CancellationTokenSource cts,
             CircuitBreakerOptions circuitBreakerOptions,
             ClusterOptions clusterOptions,
-            ILogger logger,
-            Host host = null) : base(
+            ILogger logger) : base(
             Policy.Handle<Exception>()
                 .AdvancedCircuitBreakerAsync(circuitBreakerOptions.CircuitBreakerFailureThreshold,
                     circuitBreakerOptions.CircuitBreakerSamplingDuration,
@@ -95,19 +95,17 @@ namespace GrandCentralDispatch.Nodes.Remote
         {
             _logger = logger;
             _clusterOptions = clusterOptions;
-            if (_clusterOptions.ExecuteRemotely && host != null)
-            {
-                var channel = new Channel(host.MachineName, host.Port,
-                    ChannelCredentials.Insecure);
-                _remoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput, TOutput>>(channel);
-                IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
-                _remoteNodeHealthSubscription =
-                    nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
-                    {
-                        NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
-                    });
-                _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver)nodeReceiver);
-            }
+
+            var channel = new Channel(host.MachineName, host.Port,
+                ChannelCredentials.Insecure);
+            _remoteContract = MagicOnionClient.Create<IOutputRemoteContract<TInput, TOutput>>(channel);
+            IRemoteNodeSubject nodeReceiver = new NodeReceiver(_logger);
+            _remoteNodeHealthSubscription =
+                nodeReceiver.RemoteNodeHealthSubject.Subscribe(remoteNodeHealth =>
+                {
+                    NodeMetrics.RemoteNodeHealth = remoteNodeHealth;
+                });
+            _nodeHub = StreamingHubClient.Connect<INodeHub, INodeReceiver>(channel, (INodeReceiver) nodeReceiver);
 
             NodeMetrics = new NodeMetrics(Guid.NewGuid());
         }
@@ -118,13 +116,13 @@ namespace GrandCentralDispatch.Nodes.Remote
         /// <param name="item"><see cref="TInput"/> to process</param>
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="Task"/></returns>
-        protected override async Task Process(RemoteItem<TInput, TOutput> item, CancellationToken cancellationToken)
+        protected override async Task Process(AsyncItem<TInput, TOutput> item, CancellationToken cancellationToken)
         {
             var policy = Policy
                 .Handle<Exception>(ex => !(ex is TaskCanceledException || ex is OperationCanceledException))
                 .WaitAndRetryAsync(_clusterOptions.RetryAttempt,
                     retryAttempt =>
-                            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     (exception, sleepDuration, retry, context) =>
                     {
                         if (retry >= _clusterOptions.RetryAttempt)
@@ -142,18 +140,11 @@ namespace GrandCentralDispatch.Nodes.Remote
                     if (CpuUsage > _clusterOptions.LimitCpuUsage)
                     {
                         var suspensionTime = (CpuUsage - _clusterOptions.LimitCpuUsage) / CpuUsage * 100;
-                        await Task.Delay((int)suspensionTime, ct);
+                        await Task.Delay((int) suspensionTime, ct);
                     }
 
-                    if (_clusterOptions.ExecuteRemotely)
-                    {
-                        var result = await _remoteContract.ProcessRemotely(item.Item, NodeMetrics);
-                        item.TaskCompletionSource.TrySetResult(result);
-                    }
-                    else
-                    {
-                        item.TaskCompletionSource.TrySetException(new GrandCentralDispatchException($"{typeof(RemoteNode<TInput, TOutput>)} must be configured within a remotely setup cluster."));
-                    }
+                    var result = await _remoteContract.ProcessRemotely(item.Item, NodeMetrics);
+                    item.TaskCompletionSource.TrySetResult(result);
                 }
                 catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
                 {
@@ -186,7 +177,7 @@ namespace GrandCentralDispatch.Nodes.Remote
         public async Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken)
         {
             var taskCompletionSource = new TaskCompletionSource<TOutput>();
-            return await ProcessAsync(new RemoteItem<TInput, TOutput>(taskCompletionSource, item, cancellationToken));
+            return await ProcessAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, item, cancellationToken));
         }
 
         /// <summary>
@@ -206,20 +197,17 @@ namespace GrandCentralDispatch.Nodes.Remote
             NodeMetrics.CurrentThroughput = Interlocked.Exchange(ref _processedItems, 0L);
             NodeMetrics.BufferSize = 0;
             NodeMetrics.Full = false;
-            if (_clusterOptions.ExecuteRemotely)
+            try
             {
-                try
-                {
-                    if (_nodeHub == null) return;
-                    await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
-                    NodeMetrics.Alive = true;
-                    _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
-                }
-                catch (Exception ex)
-                {
-                    NodeMetrics.Alive = false;
-                    _logger.LogWarning(ex.Message);
-                }
+                if (_nodeHub == null) return;
+                await _nodeHub.HeartBeatAsync(NodeMetrics.Id);
+                NodeMetrics.Alive = true;
+                _logger.LogTrace(NodeMetrics.RemoteNodeHealth.ToString());
+            }
+            catch (Exception ex)
+            {
+                NodeMetrics.Alive = false;
+                _logger.LogWarning(ex.Message);
             }
 
             NodeMetrics.RefreshSubject.OnNext(NodeMetrics.Id);

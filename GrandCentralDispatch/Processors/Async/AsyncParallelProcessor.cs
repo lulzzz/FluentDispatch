@@ -8,6 +8,9 @@ using Polly;
 using Polly.CircuitBreaker;
 using GrandCentralDispatch.Extensions;
 using GrandCentralDispatch.Options;
+using System.Threading.Tasks;
+using GrandCentralDispatch.Models;
+using System.Collections.Generic;
 
 namespace GrandCentralDispatch.Processors.Async
 {
@@ -16,10 +19,13 @@ namespace GrandCentralDispatch.Processors.Async
     /// </summary>
     /// <typeparam name="TInput"><see cref="TInput"/></typeparam>
     /// <typeparam name="TOutput"><see cref="TOutput"/></typeparam>
-    internal abstract class AsyncParallelProcessor<TInput, TOutput> : AsyncAbstractProcessor<TInput, TOutput>
+    /// <typeparam name="TAsync"><see cref="AsyncItem{TInput,TOutput}"/></typeparam>
+    internal abstract class
+        AsyncParallelProcessor<TInput, TOutput, TAsync> : AsyncAbstractQueueProcessor<TInput, TOutput, TAsync>
+        where TAsync : AsyncItem<TInput, TOutput>
     {
         /// <summary>
-        /// <see cref="AsyncParallelProcessor{TInput,TOutput}"/>
+        /// <see cref="AsyncParallelProcessor{TInput,TOutput,TAsync}"/>
         /// </summary>
         /// <param name="circuitBreakerPolicy"><see cref="CircuitBreakerPolicy"/></param>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
@@ -68,5 +74,27 @@ namespace GrandCentralDispatch.Processors.Async
                     },
                     ex => Logger.LogError(ex.Message));
         }
+
+        /// <summary>
+        /// Push a new item to the queue.
+        /// </summary>
+        /// <param name="item"><see cref="AsyncPredicateItem{TInput,TOutput}"/></param>
+        protected Task<TOutput> AddAsync(TAsync item)
+        {
+            Interlocked.Increment(ref _totalItemsProcessed);
+            item.CancellationToken.Register(() => { item.TaskCompletionSource.TrySetCanceled(); });
+            SynchronizedItemsSubject.OnNext(item);
+            return item.TaskCompletionSource.Task;
+        }
+
+        /// <summary>
+        /// The bulk processor.
+        /// </summary>
+        /// <param name="bulk">Bulk of <see cref="AsyncPredicateItem{TInput,TOutput}"/> to process</param>
+        /// <param name="progress">Progress of the current bulk</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        /// <returns><see cref="Task"/></returns>
+        protected abstract Task Process(IList<TAsync> bulk, IProgress<double> progress,
+            CancellationToken cancellationToken);
     }
 }
