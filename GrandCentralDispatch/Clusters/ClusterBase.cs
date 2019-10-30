@@ -117,7 +117,7 @@ namespace GrandCentralDispatch.Clusters
                     $"Error while creating persistence cache: {policyResult.FinalException?.Message ?? string.Empty}.");
             }
 
-            ClusterMetrics = new ClusterMetrics();
+            ClusterMetrics = new ClusterMetrics(Guid.NewGuid());
             var interval = new Subject<Unit>();
             var scheduler = Scheduler.Default;
             _computeClusterHealthSubscription = interval.Select(_ => Observable.Interval(TimeSpan.FromSeconds(5)))
