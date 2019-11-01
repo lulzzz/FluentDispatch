@@ -2,6 +2,7 @@
 using MagicOnion;
 using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Contract.Models;
+using GrandCentralDispatch.Contract.Services.ElasticSearch;
 using GrandCentralDispatch.Models;
 using GrandCentralDispatch.Resolvers;
 
@@ -10,10 +11,13 @@ namespace GrandCentralDispatch.Contract.Resolvers
     public sealed class PayloadResolver : Item1RemotePartialResolver<Payload, string>
     {
         private readonly ILogger _logger;
+        private readonly IElasticSearchService _elasticSearchService;
 
-        public PayloadResolver(ILoggerFactory loggerFactory)
+        public PayloadResolver(ILoggerFactory loggerFactory,
+            IElasticSearchService elasticSearchService)
         {
             _logger = loggerFactory.CreateLogger<PayloadResolver>();
+            _elasticSearchService = elasticSearchService;
         }
 
         /// <summary>

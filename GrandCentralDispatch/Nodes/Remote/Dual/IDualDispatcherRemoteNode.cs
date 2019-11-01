@@ -8,7 +8,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
     /// </summary>
     /// <typeparam name="TInput1"></typeparam>
     /// <typeparam name="TInput2"></typeparam>
-    internal interface IDualDispatcherRemoteNode<TInput1, TInput2> : IDisposable
+    internal interface IDualDispatcherRemoteNode<TInput1, TInput2> : INode, IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="TInput1"/> to the node.
@@ -33,10 +33,5 @@ namespace GrandCentralDispatch.Nodes.Remote.Dual
         /// </summary>
         /// <param name="item2"><see cref="Func{TResult}"/> to broadcast</param>
         void Dispatch(LinkedFuncItem<TInput2> item2);
-
-        /// <summary>
-        /// <see cref="NodeMetrics"/>
-        /// </summary>
-        NodeMetrics NodeMetrics { get; }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using GrandCentralDispatch.Models;
 
 namespace GrandCentralDispatch.Nodes.Local.Unary
 {
@@ -7,7 +6,7 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
     /// Node which process items locally.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
-    internal interface IUnaryDispatcherLocalNode<in TInput> : IDisposable
+    internal interface IUnaryDispatcherLocalNode<in TInput> : INode, IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="TInput"/> to the node.
@@ -20,10 +19,5 @@ namespace GrandCentralDispatch.Nodes.Local.Unary
         /// </summary>
         /// <param name="item"><see cref="Func{TResult}"/> to broadcast</param>
         void Dispatch(Func<TInput> item);
-
-        /// <summary>
-        /// <see cref="NodeMetrics"/>
-        /// </summary>
-        NodeMetrics NodeMetrics { get; }
     }
 }

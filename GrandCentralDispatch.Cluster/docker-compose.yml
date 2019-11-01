@@ -41,6 +41,51 @@ services:
       - influxdb-volume:/var/lib/influxdb
     networks:
       - gcd
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    configs:
+      - source: elastic_config
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: admin
+    networks:
+      - gcd
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.4.1
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    configs:
+      - source: logstash_config
+        target: /usr/share/logstash/config/logstash.yml
+      - source: logstash_pipeline
+        target: /usr/share/logstash/pipeline/logstash.conf
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - gcd
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.4.1
+    ports:
+      - "5601:5601"
+    configs:
+      - source: kibana_config
+        target: /usr/share/kibana/config/kibana.yml
+    networks:
+      - gcd
+configs:
+  elastic_config:
+    file: ./elk/elasticsearch/config/elasticsearch.yml
+  logstash_config:
+    file: ./elk/logstash/config/logstash.yml
+  logstash_pipeline:
+    file: ./elk/logstash/pipeline/logstash.conf
+  kibana_config:
+    file: ./elk/kibana/config/kibana.yml
 volumes:
   grafana-volume:
     external: true
@@ -48,4 +93,4 @@ volumes:
     external: true
 networks:
   gcd:
-    external: true
+    driver: overlay

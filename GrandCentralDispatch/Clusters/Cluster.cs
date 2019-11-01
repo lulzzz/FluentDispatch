@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using GrandCentralDispatch.Exceptions;
 using GrandCentralDispatch.Models;
+using GrandCentralDispatch.Nodes;
 using GrandCentralDispatch.Options;
 using GrandCentralDispatch.Resolvers;
 using Polly;
@@ -58,6 +60,11 @@ namespace GrandCentralDispatch.Clusters
         private readonly List<IDisposable> _nodeHealthSubscriptions = new List<IDisposable>();
 
         /// <summary>
+        /// <see cref="CircuitBreakerOptions"/>
+        /// </summary>
+        private readonly CircuitBreakerOptions _circuitBreakerOptions;
+
+        /// <summary>
         /// <see cref="AsyncCluster{TInput,TOutput}"/>
         /// </summary>
         /// <param name="clusterOptions"><see cref="ClusterOptions"/></param>
@@ -93,6 +100,7 @@ namespace GrandCentralDispatch.Clusters
         {
             try
             {
+                _circuitBreakerOptions = circuitBreakerOptions;
                 if (ClusterOptions.ExecuteRemotely)
                 {
                     if (!ClusterOptions.Hosts.Any())
@@ -144,7 +152,7 @@ namespace GrandCentralDispatch.Clusters
                 }
                 else
                 {
-                    for (var i = 0; i <= clusterOptions.ClusterSize; i++)
+                    for (var i = 0; i < clusterOptions.ClusterSize; i++)
                     {
                         _localAtomicNodes.Add((IAsyncDispatcherLocalNode<TInput, TOutput>) Activator.CreateInstance(
                             typeof(AsyncDispatcherLocalNode<TInput, TOutput>),
@@ -297,7 +305,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         return await node.ExecuteAsync(selector, item, cancellationToken);
                     }
                 }
@@ -343,7 +351,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         return await node.DispatchAsync(selector, item, cancellationToken);
                     }
                 }
@@ -391,7 +399,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         return await node.ExecuteAsync(item, cancellationToken);
                     }
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Healthiest)
@@ -468,7 +476,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         return await node.DispatchAsync(item, cancellationToken);
                     }
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Healthiest)
@@ -513,6 +521,154 @@ namespace GrandCentralDispatch.Clusters
                 const string message = "Could not dispatch item, this method cannot be called in a local context.";
                 Logger.LogError(message);
                 throw new GrandCentralDispatchException(message);
+            }
+        }
+
+        /// <summary>
+        /// Get nodes from the cluster
+        /// </summary>
+        public IReadOnlyCollection<INode> Nodes
+        {
+            get
+            {
+                var localAtomicNodes = _localAtomicNodes.Select(node => node as INode);
+                var localQueueNodes = _localQueueNodes.Select(node => node as INode);
+                var remoteAtomicNodes = _remoteAtomicNodes.Select(node => node as INode);
+                var remoteQueueNodes = _remoteQueueNodes.Select(node => node as INode);
+                return new ReadOnlyCollection<INode>(localAtomicNodes.Concat(localQueueNodes).Concat(remoteAtomicNodes)
+                    .Concat(remoteQueueNodes).ToList());
+
+            }
+        }
+
+        /// <summary>
+        /// Add a node
+        /// </summary>
+        /// <param name="host">Specified host if the node is a remote node</param>
+        public void AddNode(Host host = null)
+        {
+            if (ClusterOptions.ExecuteRemotely)
+            {
+                if (host == null)
+                {
+                    throw new GrandCentralDispatchException(
+                        "Host must be provided.");
+                }
+
+                _remoteAtomicNodes.Add((IAsyncDispatcherRemoteNode<TInput, TOutput>) Activator.CreateInstance(
+                    typeof(AsyncDispatcherRemoteNode<TInput, TOutput>),
+                    host,
+                    CancellationTokenSource,
+                    _circuitBreakerOptions,
+                    ClusterOptions,
+                    Logger));
+
+                if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
+                {
+                    _remoteQueueNodes.Add(
+                        (IAsyncDispatcherQueueRemoteNode<TInput, TOutput>) Activator.CreateInstance(
+                            typeof(AsyncParallelDispatcherRemoteNode<TInput, TOutput>),
+                            host,
+                            Progress,
+                            CancellationTokenSource,
+                            _circuitBreakerOptions,
+                            ClusterOptions,
+                            Logger));
+                }
+                else if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
+                {
+                    _remoteQueueNodes.Add(
+                        (IAsyncDispatcherQueueRemoteNode<TInput, TOutput>) Activator.CreateInstance(
+                            typeof(AsyncSequentialDispatcherRemoteNode<TInput, TOutput>),
+                            host,
+                            Progress,
+                            CancellationTokenSource,
+                            _circuitBreakerOptions,
+                            ClusterOptions,
+                            Logger));
+                }
+                else
+                {
+                    throw new NotImplementedException(
+                        $"{nameof(ClusterProcessingType)} of value {ClusterOptions.ClusterProcessingType.ToString()} is not implemented.");
+                }
+            }
+            else
+            {
+                _localAtomicNodes.Add((IAsyncDispatcherLocalNode<TInput, TOutput>) Activator.CreateInstance(
+                    typeof(AsyncDispatcherLocalNode<TInput, TOutput>),
+                    CancellationTokenSource,
+                    _circuitBreakerOptions,
+                    ClusterOptions,
+                    Logger));
+
+                if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
+                {
+                    _localQueueNodes.Add(
+                        (IAsyncDispatcherQueueLocalNode<TInput, TOutput>) Activator.CreateInstance(
+                            typeof(AsyncParallelDispatcherLocalNode<TInput, TOutput>),
+                            Progress,
+                            CancellationTokenSource,
+                            _circuitBreakerOptions,
+                            ClusterOptions,
+                            Logger));
+                }
+                else if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
+                {
+                    _localQueueNodes.Add(
+                        (IAsyncDispatcherQueueLocalNode<TInput, TOutput>) Activator.CreateInstance(
+                            typeof(AsyncSequentialDispatcherLocalNode<TInput, TOutput>),
+                            Progress,
+                            CancellationTokenSource,
+                            _circuitBreakerOptions,
+                            ClusterOptions,
+                            Logger));
+                }
+                else
+                {
+                    throw new NotImplementedException(
+                        $"{nameof(ClusterProcessingType)} of value {ClusterOptions.ClusterProcessingType.ToString()} is not implemented.");
+                }
+            }
+
+            _nodeHealthSubscriptions.Add(_localAtomicNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeLocalAtomicNodeHealth));
+            _nodeHealthSubscriptions.Add(_localQueueNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeLocalQueueNodeHealth));
+            _nodeHealthSubscriptions.Add(_remoteAtomicNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeRemoteAtomicNodeHealth));
+            _nodeHealthSubscriptions.Add(_remoteQueueNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeRemoteQueueNodeHealth));
+        }
+
+        /// <summary>
+        /// Delete a node
+        /// </summary>
+        /// <param name="nodeId">Node Id</param>
+        public void DeleteNode(Guid nodeId)
+        {
+            if (_localAtomicNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _localAtomicNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _localAtomicNodes.Remove(nodeToRemove);
+            }
+
+            if (_localQueueNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _localQueueNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _localQueueNodes.Remove(nodeToRemove);
+            }
+
+            if (_remoteAtomicNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _remoteAtomicNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _remoteAtomicNodes.Remove(nodeToRemove);
+            }
+
+            if (_remoteQueueNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _remoteQueueNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _remoteQueueNodes.Remove(nodeToRemove);
             }
         }
 
@@ -582,6 +738,16 @@ namespace GrandCentralDispatch.Clusters
         private readonly List<IDisposable> _nodeHealthSubscriptions = new List<IDisposable>();
 
         /// <summary>
+        /// <see cref="CircuitBreakerOptions"/>
+        /// </summary>
+        private readonly CircuitBreakerOptions _circuitBreakerOptions;
+
+        /// <summary>
+        /// <see cref="FuncResolver{TInput}"/>
+        /// </summary>
+        private readonly FuncResolver<TInput> _funcResolver;
+
+        /// <summary>
         /// <see cref="Cluster{TInput}"/>
         /// </summary>
         /// <param name="resolver"><see cref="Resolver{TInput}"/></param>
@@ -625,6 +791,8 @@ namespace GrandCentralDispatch.Clusters
         {
             try
             {
+                _funcResolver = funcResolver;
+                _circuitBreakerOptions = circuitBreakerOptions;
                 if (ClusterOptions.ExecuteRemotely)
                 {
                     if (!ClusterOptions.Hosts.Any())
@@ -668,7 +836,7 @@ namespace GrandCentralDispatch.Clusters
                 }
                 else
                 {
-                    for (var i = 0; i <= clusterOptions.ClusterSize; i++)
+                    for (var i = 0; i < clusterOptions.ClusterSize; i++)
                     {
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
@@ -800,7 +968,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         node.Dispatch(item);
                     }
                 }
@@ -831,7 +999,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         node.Dispatch(item);
                     }
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Healthiest)
@@ -898,7 +1066,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         node.Dispatch(itemProducer);
                     }
                 }
@@ -929,7 +1097,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         node.Dispatch(itemProducer);
                     }
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Healthiest)
@@ -967,6 +1135,121 @@ namespace GrandCentralDispatch.Clusters
                         Logger.LogWarning(message);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Get nodes from the cluster
+        /// </summary>
+        public IReadOnlyCollection<INode> Nodes
+        {
+            get
+            {
+                var localNodes = _localNodes.Select(node => node as INode);
+                var remoteNodes = _remoteNodes.Select(node => node as INode);
+                return new ReadOnlyCollection<INode>(localNodes.Concat(remoteNodes).ToList());
+            }
+        }
+
+        /// <summary>
+        /// Add a node
+        /// </summary>
+        /// <param name="host">Specified host if the node is a remote node</param>
+        public void AddNode(Host host = null)
+        {
+            if (ClusterOptions.ExecuteRemotely)
+            {
+                if (host == null)
+                {
+                    throw new GrandCentralDispatchException(
+                        "Host must be provided.");
+                }
+
+                if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
+                {
+                    _remoteNodes.Add((IUnaryDispatcherRemoteNode<TInput>) Activator.CreateInstance(
+                        typeof(UnaryParallelDispatcherRemoteNode<TInput>),
+                        PersistentCache,
+                        Progress,
+                        host,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
+                {
+                    _remoteNodes.Add((IUnaryDispatcherRemoteNode<TInput>) Activator.CreateInstance(
+                        typeof(UnarySequentialDispatcherRemoteNode<TInput>),
+                        PersistentCache,
+                        Progress,
+                        host,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else
+                {
+                    throw new NotImplementedException(
+                        $"{nameof(ClusterProcessingType)} of value {ClusterOptions.ClusterProcessingType.ToString()} is not implemented.");
+                }
+            }
+            else
+            {
+                if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
+                {
+                    _localNodes.Add((IUnaryDispatcherLocalNode<TInput>) Activator.CreateInstance(
+                        typeof(UnaryParallelDispatcherLocalNode<TInput>),
+                        PersistentCache,
+                        _funcResolver.GetItemFunc(),
+                        Progress,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
+                {
+                    _localNodes.Add((IUnaryDispatcherLocalNode<TInput>) Activator.CreateInstance(
+                        typeof(UnarySequentialDispatcherLocalNode<TInput>),
+                        PersistentCache,
+                        _funcResolver.GetItemFunc(),
+                        Progress,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else
+                {
+                    throw new NotImplementedException(
+                        $"{nameof(ClusterProcessingType)} of value {ClusterOptions.ClusterProcessingType.ToString()} is not implemented.");
+                }
+            }
+
+            _nodeHealthSubscriptions.Add(_localNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeLocalNodeHealth));
+            _nodeHealthSubscriptions.Add(_remoteNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeRemoteNodeHealth));
+        }
+
+        /// <summary>
+        /// Delete a node
+        /// </summary>
+        /// <param name="nodeId">Node Id</param>
+        public void DeleteNode(Guid nodeId)
+        {
+            if (_localNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _localNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _localNodes.Remove(nodeToRemove);
+            }
+
+            if (_remoteNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _remoteNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _remoteNodes.Remove(nodeToRemove);
             }
         }
 
@@ -1037,6 +1320,26 @@ namespace GrandCentralDispatch.Clusters
         /// <see cref="MemoryCacheEntryOptions"/>
         /// </summary>
         private readonly MemoryCacheEntryOptions _cacheEntryOptions;
+
+        /// <summary>
+        /// <see cref="CircuitBreakerOptions"/>
+        /// </summary>
+        private readonly CircuitBreakerOptions _circuitBreakerOptions;
+
+        /// <summary>
+        /// <see cref="FuncPartialResolver{TInput1,TOutput1}"/>
+        /// </summary>
+        private readonly FuncPartialResolver<TInput1, TOutput1> _item1PartialResolver;
+
+        /// <summary>
+        /// <see cref="FuncPartialResolver{TInput2,TOutput2}"/>
+        /// </summary>
+        private readonly FuncPartialResolver<TInput2, TOutput2> _item2PartialResolver;
+
+        /// <summary>
+        /// <see cref="FuncResolver{TOutput1,TOutput2}"/>
+        /// </summary>
+        private readonly FuncResolver<TOutput1, TOutput2> _dualResolver;
 
         /// <summary>
         /// <see cref="Cluster{TInput1, TInput2, TOutput2, TOutput2}"/>
@@ -1130,6 +1433,10 @@ namespace GrandCentralDispatch.Clusters
                 .SetSize(1);
             try
             {
+                _circuitBreakerOptions = circuitBreakerOptions;
+                _item1PartialResolver = item1PartialResolver;
+                _item2PartialResolver = item2PartialResolver;
+                _dualResolver = dualResolver;
                 if (ClusterOptions.ExecuteRemotely)
                 {
                     if (!ClusterOptions.Hosts.Any())
@@ -1173,7 +1480,7 @@ namespace GrandCentralDispatch.Clusters
                 }
                 else
                 {
-                    for (var i = 0; i <= clusterOptions.ClusterSize; i++)
+                    for (var i = 0; i < clusterOptions.ClusterSize; i++)
                     {
                         if (clusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
                         {
@@ -1325,7 +1632,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput1>(key, item, persistentCacheToken);
@@ -1369,7 +1676,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput1>(key, item, persistentCacheToken);
@@ -1453,7 +1760,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput2>(key, item, persistentCacheToken);
@@ -1497,7 +1804,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedItem<TInput2>(key, item, persistentCacheToken);
@@ -1581,7 +1888,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput1>(key, itemProducer, persistentCacheToken);
@@ -1625,7 +1932,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput1>(key, itemProducer, persistentCacheToken);
@@ -1709,7 +2016,7 @@ namespace GrandCentralDispatch.Clusters
                     else
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput2>(key, itemProducer, persistentCacheToken);
@@ -1753,7 +2060,7 @@ namespace GrandCentralDispatch.Clusters
                     else if (ClusterOptions.NodeQueuingStrategy == NodeQueuingStrategy.Randomized)
                     {
                         var node = availableNodes.ElementAt(Random.Value.Next(0,
-                            availableNodes.Count - 1));
+                            availableNodes.Count));
                         _resolverCache.Set(key, node.NodeMetrics.Id, _cacheEntryOptions);
                         var persistentCacheToken = new CancellationTokenSource();
                         var persistentItem = new LinkedFuncItem<TInput2>(key, itemProducer, persistentCacheToken);
@@ -1797,6 +2104,125 @@ namespace GrandCentralDispatch.Clusters
                         Logger.LogWarning(message);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Get nodes from the cluster
+        /// </summary>
+        public IReadOnlyCollection<INode> Nodes
+        {
+            get
+            {
+                var localNodes = _localNodes.Select(node => node as INode);
+                var remoteNodes = _remoteNodes.Select(node => node as INode);
+                return new ReadOnlyCollection<INode>(localNodes.Concat(remoteNodes).ToList());
+            }
+        }
+
+        /// <summary>
+        /// Add a node
+        /// </summary>
+        /// <param name="host">Specified host if the node is a remote node</param>
+        public void AddNode(Host host = null)
+        {
+            if (ClusterOptions.ExecuteRemotely)
+            {
+                if (host == null)
+                {
+                    throw new GrandCentralDispatchException(
+                        "Host must be provided.");
+                }
+
+                if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
+                {
+                    _remoteNodes.Add((IDualDispatcherRemoteNode<TInput1, TInput2>) Activator.CreateInstance(
+                        typeof(DualParallelDispatcherRemoteNode<TInput1, TInput2, TOutput1, TOutput2>),
+                        PersistentCache,
+                        Progress,
+                        host,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
+                {
+                    _remoteNodes.Add((IDualDispatcherRemoteNode<TInput1, TInput2>) Activator.CreateInstance(
+                        typeof(DualSequentialDispatcherRemoteNode<TInput1, TInput2, TOutput1, TOutput2>),
+                        PersistentCache,
+                        Progress,
+                        host,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else
+                {
+                    throw new NotImplementedException(
+                        $"{nameof(ClusterProcessingType)} of value {ClusterOptions.ClusterProcessingType.ToString()} is not implemented.");
+                }
+            }
+            else
+            {
+                if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Parallel)
+                {
+                    _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>) Activator.CreateInstance(
+                        typeof(DualParallelDispatcherLocalNode<TInput1, TInput2, TOutput1, TOutput2>),
+                        PersistentCache,
+                        _item1PartialResolver?.GetItemFunc(),
+                        _item2PartialResolver?.GetItemFunc(),
+                        _dualResolver?.GetItemFunc(),
+                        Progress,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else if (ClusterOptions.ClusterProcessingType == ClusterProcessingType.Sequential)
+                {
+                    _localNodes.Add((IDualDispatcherLocalNode<TInput1, TInput2>) Activator.CreateInstance(
+                        typeof(DualSequentialDispatcherLocalNode<TInput1, TInput2, TOutput1, TOutput2>),
+                        PersistentCache,
+                        _item1PartialResolver?.GetItemFunc(),
+                        _item2PartialResolver?.GetItemFunc(),
+                        _dualResolver?.GetItemFunc(),
+                        Progress,
+                        CancellationTokenSource,
+                        _circuitBreakerOptions,
+                        ClusterOptions,
+                        Logger));
+                }
+                else
+                {
+                    throw new NotImplementedException(
+                        $"{nameof(ClusterProcessingType)} of value {ClusterOptions.ClusterProcessingType.ToString()} is not implemented.");
+                }
+            }
+
+            _nodeHealthSubscriptions.Add(_localNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeLocalNodeHealth));
+            _nodeHealthSubscriptions.Add(_remoteNodes.Last().NodeMetrics.RefreshSubject
+                .Subscribe(ComputeRemoteNodeHealth));
+        }
+
+        /// <summary>
+        /// Delete a node
+        /// </summary>
+        /// <param name="nodeId">Node Id</param>
+        public void DeleteNode(Guid nodeId)
+        {
+            if (_localNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _localNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _localNodes.Remove(nodeToRemove);
+            }
+
+            if (_remoteNodes.Any(node => node.NodeMetrics.Id == nodeId))
+            {
+                var nodeToRemove = _remoteNodes.Single(n => n.NodeMetrics.Id == nodeId);
+                _remoteNodes.Remove(nodeToRemove);
             }
         }
 

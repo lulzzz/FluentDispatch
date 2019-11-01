@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GrandCentralDispatch.Contract.Services.ElasticSearch;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GrandCentralDispatch.Node
@@ -11,6 +12,7 @@ namespace GrandCentralDispatch.Node
 
         public override void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IElasticSearchService, ElasticSearchService>();
             services.AddHttpClient();
             base.ConfigureServices(services);
         }

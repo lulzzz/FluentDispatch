@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.46" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.47" />
     <Reference Include="Microsoft.Diagnostics.Tools.RuntimeClient">
       <HintPath>Microsoft.Diagnostics.Tools.RuntimeClient.dll</HintPath>
     </Reference>

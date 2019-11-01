@@ -12,8 +12,7 @@ namespace GrandCentralDispatch.Node
             var host = GrandCentralDispatchNodeHost<Startup>.CreateDefaultBuilder(true, LogLevel.Information,
                     typeof(Contract.Resolvers.PayloadResolver),
                     typeof(Contract.Resolvers.UriResolver),
-                    typeof(Contract.Resolvers.RequestResolver),
-                    typeof(Contract.Resolvers.HeaderResolver))
+                    typeof(Contract.Resolvers.RequestResolver))
                 .Build();
             await host.RunAsync();
         }

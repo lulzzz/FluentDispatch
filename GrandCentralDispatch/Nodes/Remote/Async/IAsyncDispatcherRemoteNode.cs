@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GrandCentralDispatch.Models;
 
 namespace GrandCentralDispatch.Nodes.Remote.Async
 {
@@ -10,7 +9,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal interface IAsyncDispatcherRemoteNode<in TInput, TOutput> : IDisposable
+    internal interface IAsyncDispatcherRemoteNode<in TInput, TOutput> : INode, IDisposable
     {
         /// <summary>
         /// Dispatch a <see cref="Func{TInput}"/> to the node.
@@ -20,10 +19,5 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
         /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns><see cref="TOutput"/></returns>
         Task<TOutput> ExecuteAsync(TInput item, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// <see cref="NodeMetrics"/>
-        /// </summary>
-        NodeMetrics NodeMetrics { get; }
     }
 }

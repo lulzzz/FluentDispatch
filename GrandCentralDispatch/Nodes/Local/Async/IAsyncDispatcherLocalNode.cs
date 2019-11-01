@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GrandCentralDispatch.Models;
 
 namespace GrandCentralDispatch.Nodes.Local.Async
 {
@@ -10,7 +9,7 @@ namespace GrandCentralDispatch.Nodes.Local.Async
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
-    internal interface IAsyncDispatcherLocalNode<TInput, TOutput> : IDisposable
+    internal interface IAsyncDispatcherLocalNode<TInput, TOutput> : INode, IDisposable
     {
         /// <summary>
         /// Execute a <see cref="Func{TInput}"/> against the local node using a selector predicate.
@@ -22,10 +21,5 @@ namespace GrandCentralDispatch.Nodes.Local.Async
         /// <returns><see cref="TOutput"/></returns>
         Task<TOutput> ExecuteAsync(Func<TInput, Task<TOutput>> selector, TInput item,
             CancellationToken cancellationToken);
-
-        /// <summary>
-        /// <see cref="NodeMetrics"/>
-        /// </summary>
-        NodeMetrics NodeMetrics { get; }
     }
 }

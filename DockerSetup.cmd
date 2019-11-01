@@ -4,6 +4,9 @@
 
 TITLE GrandCentralDispatch Docker Setup
 
+ECHO Please wait... Initializing Docker Swarm.
+docker swarm init
+
 ECHO Please wait... Creating Docker network bridge.
 docker network create --driver=bridge --subnet=192.168.2.0/24 --gateway=192.168.2.10 gcd
 

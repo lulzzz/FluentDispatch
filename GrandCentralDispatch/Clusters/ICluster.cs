@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using GrandCentralDispatch.Metrics;
 using GrandCentralDispatch.Models;
+using GrandCentralDispatch.Nodes;
 using GrandCentralDispatch.Options;
 
 namespace GrandCentralDispatch.Clusters
@@ -58,6 +60,23 @@ namespace GrandCentralDispatch.Clusters
         /// <see cref="ClusterMetrics"/>
         /// </summary>
         ClusterMetrics ClusterMetrics { get; }
+
+        /// <summary>
+        /// Get nodes from the cluster
+        /// </summary>
+        IReadOnlyCollection<INode> Nodes { get; }
+
+        /// <summary>
+        /// Add a node
+        /// </summary>
+        /// <param name="host">Specified host if the node is a remote node</param>
+        void AddNode(Host host = null);
+
+        /// <summary>
+        /// Delete a node
+        /// </summary>
+        /// <param name="nodeId">Node Id</param>
+        void DeleteNode(Guid nodeId);
     }
 
     /// <summary>
@@ -100,6 +119,23 @@ namespace GrandCentralDispatch.Clusters
         /// <see cref="ClusterMetrics"/>
         /// </summary>
         ClusterMetrics ClusterMetrics { get; }
+
+        /// <summary>
+        /// Get nodes from the cluster
+        /// </summary>
+        IReadOnlyCollection<INode> Nodes { get; }
+
+        /// <summary>
+        /// Add a node
+        /// </summary>
+        /// <param name="host">Specified host if the node is a remote node</param>
+        void AddNode(Host host = null);
+
+        /// <summary>
+        /// Delete a node
+        /// </summary>
+        /// <param name="nodeId">Node Id</param>
+        void DeleteNode(Guid nodeId);
     }
 
     /// <summary>
@@ -167,5 +203,22 @@ namespace GrandCentralDispatch.Clusters
         /// <see cref="ClusterMetrics"/>
         /// </summary>
         ClusterMetrics ClusterMetrics { get; }
+
+        /// <summary>
+        /// Get nodes from the cluster
+        /// </summary>
+        IReadOnlyCollection<INode> Nodes { get; }
+
+        /// <summary>
+        /// Add a node
+        /// </summary>
+        /// <param name="host">Specified host if the node is a remote node</param>
+        void AddNode(Host host = null);
+
+        /// <summary>
+        /// Delete a node
+        /// </summary>
+        /// <param name="nodeId">Node Id</param>
+        void DeleteNode(Guid nodeId);
     }
 }
