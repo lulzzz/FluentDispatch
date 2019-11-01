@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - gcd
+      - gcd-network
   grafana:
     build: './grafana'
     container_name: grafana
@@ -30,7 +30,7 @@ services:
       - grafana-volume:/var/lib/grafana
       - ./grafana/provisioning/:/etc/grafana/provisioning/
     networks:
-      - gcd
+      - gcd-network
   influxdb:
     image: influxdb
     container_name: influxdb
@@ -40,57 +40,80 @@ services:
     volumes:
       - influxdb-volume:/var/lib/influxdb
     networks:
-      - gcd
+      - gcd-network
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.1
+    container_name: elasticsearch
+    build:
+      context: elk/elasticsearch/
+      args:
+        ELK_VERSION: "7.4.1"
+    image: elasticsearch
+    volumes:
+      - type: bind
+        source: ./elk/elasticsearch/config/elasticsearch.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true
+      - type: volume
+        source: elasticsearch-volume
+        target: /usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
-    configs:
-      - source: elastic_config
-        target: /usr/share/elasticsearch/config/elasticsearch.yml
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
       ELASTIC_PASSWORD: admin
     networks:
-      - gcd
+      - gcd-network
   logstash:
-    image: docker.elastic.co/logstash/logstash:7.4.1
+    container_name: logstash
+    build:
+      context: elk/logstash/
+      args:
+        ELK_VERSION: "7.4.1"
+    image: logstash
+    volumes:
+      - type: bind
+        source: ./elk/logstash/config/logstash.yml
+        target: /usr/share/logstash/config/logstash.yml
+        read_only: true
+      - type: bind
+        source: ./elk/logstash/pipeline
+        target: /usr/share/logstash/pipeline
+        read_only: true
     ports:
       - "5000:5000"
       - "9600:9600"
-    configs:
-      - source: logstash_config
-        target: /usr/share/logstash/config/logstash.yml
-      - source: logstash_pipeline
-        target: /usr/share/logstash/pipeline/logstash.conf
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
-      - gcd
+      - gcd-network
+    depends_on:
+      - elasticsearch
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.4.1
+    container_name: kibana
+    build:
+      context: elk/kibana/
+      args:
+        ELK_VERSION: "7.4.1"
+    image: kibana
+    volumes:
+      - type: bind
+        source: ./elk/kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
     ports:
       - "5601:5601"
-    configs:
-      - source: kibana_config
-        target: /usr/share/kibana/config/kibana.yml
     networks:
-      - gcd
-configs:
-  elastic_config:
-    file: ./elk/elasticsearch/config/elasticsearch.yml
-  logstash_config:
-    file: ./elk/logstash/config/logstash.yml
-  logstash_pipeline:
-    file: ./elk/logstash/pipeline/logstash.conf
-  kibana_config:
-    file: ./elk/kibana/config/kibana.yml
+      - gcd-network
+    depends_on:
+      - elasticsearch
 volumes:
   grafana-volume:
     external: true
   influxdb-volume:
     external: true
+  elasticsearch-volume:
+    external: true
 networks:
-  gcd:
-    driver: overlay
+  gcd-network:
+    external: true

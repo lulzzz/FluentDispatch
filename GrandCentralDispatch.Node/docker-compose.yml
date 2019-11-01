@@ -11,7 +11,7 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - gcd
+      - gcd-network
 networks:
-  gcd:
+  gcd-network:
     external: true
