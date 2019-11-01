@@ -32,7 +32,6 @@ namespace GrandCentralDispatch.Options
         /// <param name="retryAttempt">Specify how many times node have to retry a failed item process.</param>
         /// <param name="windowInMilliseconds">Unit of time of the sliding windows, in which <see cref="nodeThrottling"/> items will be processed.</param>
         /// <param name="clusterProcessingType">Set the processing type of the cluster, i.e how items are dequeued from each node to be processed.</param>
-        /// <param name="aggressivelyGcCollect">Force GC collection and compacting LOH regularly to prevent memory exhaustion when the cluster deals with many incoming items.</param>
         /// <param name="executeRemotely">Execute calls using RPC to remote clients</param>
         /// <param name="hosts">Remote hosts</param>
         /// <param name="enablePerformanceCounters">Enable Windows Performance Counters</param>
@@ -46,7 +45,6 @@ namespace GrandCentralDispatch.Options
             int retryAttempt = 3,
             int windowInMilliseconds = 1000,
             ClusterProcessingType clusterProcessingType = ClusterProcessingType.Parallel,
-            bool aggressivelyGcCollect = false,
             bool executeRemotely = false,
             ISet<Host> hosts = null,
             bool enablePerformanceCounters = false)
@@ -61,7 +59,6 @@ namespace GrandCentralDispatch.Options
             RetryAttempt = retryAttempt;
             Window = TimeSpan.FromMilliseconds(windowInMilliseconds);
             ClusterProcessingType = clusterProcessingType;
-            AggressivelyGcCollect = aggressivelyGcCollect;
             ExecuteRemotely = executeRemotely;
             Hosts = hosts;
             EnablePerformanceCounters = enablePerformanceCounters;
@@ -140,11 +137,6 @@ namespace GrandCentralDispatch.Options
         /// Usually, Parallel eats more CPU than memory and Sequential eats more memory than CPU.
         /// </remarks>
         public ClusterProcessingType ClusterProcessingType { get; set; } = ClusterProcessingType.Parallel;
-
-        /// <summary>
-        /// Force GC collection and compacting LOH regularly to prevent memory exhaustion when the cluster deals with many incoming items
-        /// </summary>
-        public bool AggressivelyGcCollect { get; set; } = false;
 
         /// <summary>
         /// Execute resolvers on remote clients, using <see cref="Hosts"/>

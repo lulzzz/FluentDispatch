@@ -175,7 +175,6 @@ Initializing cluster v{version}...
 # Number of retry attempts on failing items: {ClusterOptions.RetryAttempt}
 # Evict items on throttling: {ClusterOptions.EvictItemsWhenNodesAreFull}
 {(ClusterOptions.PersistenceEnabled ? $"# Persistence enabled with maximum items in memory: {ClusterOptions.MaxItemsInPersistentCache}" : "# Persistence disabled")}
-# Aggressively GC collection: {ClusterOptions.AggressivelyGcCollect}
 ");
 
             Logger.LogInformation($@"
@@ -245,12 +244,6 @@ Setting cluster circuit breaker options...
             }
 
             ClusterMetrics.Health = clusterHealth;
-            if (ClusterOptions.AggressivelyGcCollect)
-            {
-                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-                GC.Collect();
-            }
-
             var clusterMetricSubmitted = ClusterMetricSubmitted;
             clusterMetricSubmitted?.Invoke(this, new ClusterMetricsEventArgs(ClusterMetrics));
         }
