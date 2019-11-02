@@ -13,17 +13,14 @@ namespace GrandCentralDispatch.Cluster.Controllers
     public class IngressController : ControllerBase
     {
         private readonly ICluster<Payload, Uri> _cluster;
-        private readonly IAsyncCluster<string, string> _remoteCluster;
 
         /// <summary>
         /// <see cref="ICluster{T}"/>
         /// </summary>
         /// <param name="cluster"></param>
-        /// <param name="remoteCluster"></param>
-        public IngressController(ICluster<Payload, Uri> cluster, IAsyncCluster<string, string> remoteCluster)
+        public IngressController(ICluster<Payload, Uri> cluster)
         {
             _cluster = cluster;
-            _remoteCluster = remoteCluster;
         }
 
         /// <summary>
@@ -44,14 +41,7 @@ namespace GrandCentralDispatch.Cluster.Controllers
 
             // We post directly the value because there is nothing to compute here
             _cluster.Dispatch(requestIdentifier, payload);
-
-            var headers = Request.Headers.ToList();
-            var computedResult = await _remoteCluster.ExecuteAsync(headers.Select(header =>
-            {
-                header.Deconstruct(out var key, out var value);
-                return $"{key}:{value}";
-            }).Aggregate((header1, header2) => string.Join(';', header1, header2)), CancellationToken.None);
-            return Ok(computedResult);
+            return Ok();
         }
     }
 }

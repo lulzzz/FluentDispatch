@@ -29,6 +29,7 @@ namespace GrandCentralDispatch.Contract.Resolvers
         public override async UnaryResult<string> ProcessItem1Remotely(Payload item,
             NodeMetrics nodeMetrics)
         {
+            await _elasticSearchService.Client.Value;
             _logger.LogInformation(
                 $"New payload {item.Body} received from node {nodeMetrics.Id}...");
             return await Task.FromResult(item.Body);
