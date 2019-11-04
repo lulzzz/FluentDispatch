@@ -43,7 +43,7 @@ namespace GrandCentralDispatch.Contract.Resolvers
                     Date = DateTimeOffset.Now,
                     Title = details.Title,
                     Overview = details.Overview,
-                    Liked = prediction.Prediction[1] > 0.5
+                    Liked = prediction.Prediction[0] < 0.5
                 },
                 i => i.Index(Constants.ReviewIndexName));
             if (!elasticResponse.IsValid)
