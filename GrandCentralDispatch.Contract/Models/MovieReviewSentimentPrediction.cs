@@ -1,7 +1,7 @@
 ﻿using MessagePack;
 using Microsoft.ML.Data;
 
-namespace GrandCentralDispatch.Contract.Models.Tensorflow
+namespace GrandCentralDispatch.Contract.Models
 {
     /// <summary>
     /// This is the payload exchanged between the cluster and its nodes

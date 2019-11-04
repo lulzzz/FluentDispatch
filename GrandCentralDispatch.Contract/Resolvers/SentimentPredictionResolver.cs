@@ -72,14 +72,11 @@ namespace GrandCentralDispatch.Contract.Resolvers
                         (Action<VariableLength, FixedLength>) ResizeFeaturesAction, "Resize"))
                     .Append(tensorFlowModel.ScoreTensorFlowModel("Prediction/Softmax", "Features"))
                     .Append(mlContext.Transforms.CopyColumns("Prediction", "Prediction/Softmax"));
-            var dataView = mlContext.Data.LoadFromEnumerable(new List<MovieReviewSentiment>());
+            var dataView = mlContext.Data.LoadFromEnumerable(new List<MovieReview>());
             var model = pipeline.Fit(dataView);
             var engine =
-                mlContext.Model.CreatePredictionEngine<MovieReviewSentiment, MovieReviewSentimentPrediction>(model);
-            var sentimentPrediction = engine.Predict(new MovieReviewSentiment
-            {
-                ReviewText = movieReview.ReviewText
-            });
+                mlContext.Model.CreatePredictionEngine<MovieReview, MovieReviewSentimentPrediction>(model);
+            var sentimentPrediction = engine.Predict(movieReview);
             _logger.LogInformation("Number of classes: {0}", sentimentPrediction.Prediction.Length);
             _logger.LogInformation("Is sentiment/review positive? {0}",
                 sentimentPrediction.Prediction[0] < 0.5 ? "Yes." : "No.");
