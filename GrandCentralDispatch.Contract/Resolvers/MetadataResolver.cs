@@ -12,13 +12,13 @@ namespace GrandCentralDispatch.Contract.Resolvers
     public sealed class MetadataResolver : Item1RemotePartialResolver<MovieDetails, MovieDetails>
     {
         private readonly ILogger _logger;
-        private readonly IConfiguration _configuration;
+        private readonly TMDbClient _tmdbClient;
 
         public MetadataResolver(ILoggerFactory loggerFactory,
             IConfiguration configuration)
         {
             _logger = loggerFactory.CreateLogger<MetadataResolver>();
-            _configuration = configuration;
+            _tmdbClient = new TMDbClient(configuration["TMDB_API_KEY"]);
         }
 
         /// <summary>
@@ -32,8 +32,7 @@ namespace GrandCentralDispatch.Contract.Resolvers
         {
             _logger.LogInformation(
                 $"Movie title received from node {nodeMetrics.Id}: {movieDetails.Title}.");
-            var client = new TMDbClient(_configuration["TMDB_API_KEY"]);
-            var movie = await client.SearchMovieAsync(movieDetails.Title);
+            var movie = await _tmdbClient.SearchMovieAsync(movieDetails.Title);
             return new MovieDetails
             {
                 Title = movieDetails.Title,
