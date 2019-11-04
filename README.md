@@ -3,3 +3,6 @@
 
 # Sample
 ![Sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Sample.png)
+
+# Demo
+![Demo](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/GCD.gif)
