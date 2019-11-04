@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using GrandCentralDispatch.Contract.Models;
+using GrandCentralDispatch.Contract.Models.Tensorflow;
 using GrandCentralDispatch.Contract.Resolvers;
 using GrandCentralDispatch.Contract.Services.ElasticSearch;
 using GrandCentralDispatch.Extensions;
@@ -46,10 +46,10 @@ namespace GrandCentralDispatch.Cluster
                 circuitBreakerOptions => { });
 
             // Set-up the cluster
-            services.AddCluster<Payload, Uri, string, string>(
-                sp => new PayloadResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IElasticSearchService>()),
-                sp => new UriResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IHttpClientFactory>()),
-                sp => new RequestResolver(sp.GetService<ILoggerFactory>()));
+            services.AddCluster<MovieDetails, MovieReview, MovieDetails, MovieReviewSentimentPrediction>(
+                sp => new MetadataResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IConfiguration>()),
+                sp => new SentimentPredictionResolver(sp.GetService<ILoggerFactory>()),
+                sp => new IndexerResolver(sp.GetService<ILoggerFactory>(), sp.GetService<IElasticSearchService>()));
 
             base.ConfigureServices(services);
         }

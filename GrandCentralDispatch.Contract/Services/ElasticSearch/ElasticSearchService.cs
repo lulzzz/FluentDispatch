@@ -2,7 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Elasticsearch.Net;
-using GrandCentralDispatch.Contract.Models;
+using GrandCentralDispatch.Contract.Helpers;
+using GrandCentralDispatch.Contract.Models.ElasticSearch;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nest;
 
@@ -13,15 +15,15 @@ namespace GrandCentralDispatch.Contract.Services.ElasticSearch
         public Lazy<Task<IElasticClient>> Client { get; }
         private readonly ILogger _logger;
 
-        public ElasticSearchService(ILogger logger)
+        public ElasticSearchService(ILoggerFactory loggerFactory, IConfiguration configuration)
         {
-            _logger = logger;
-            var pool = new SingleNodeConnectionPool(new Uri("http://localhost:9200"));
+            _logger = loggerFactory.CreateLogger<ElasticSearchService>();
+            var pool = new SingleNodeConnectionPool(new Uri(configuration["ELASTICSEARCH_ENDPOINT"]));
             var connSettings = new ConnectionSettings(pool)
-                .DefaultMappingFor<Sentiment>(m => m
-                    .IndexName("sentiment")
+                .DefaultMappingFor<Review>(m => m
+                    .IndexName(Constants.ReviewIndexName)
                 )
-                .BasicAuthentication("elastic", "admin")
+                .BasicAuthentication(configuration["ELASTICSEARCH_USER"], configuration["ELASTICSEARCH_PASSWORD"])
                 .IncludeServerStackTraceOnError()
                 .EnableHttpPipelining()
                 .EnableHttpCompression();
@@ -31,15 +33,15 @@ namespace GrandCentralDispatch.Contract.Services.ElasticSearch
                 var client = new ElasticClient(connSettings);
                 try
                 {
-                    var workerMapping =
-                        new CreateIndexDescriptor("sentiment")
-                            .Map<Sentiment>(m => m
+                    var mapping =
+                        new CreateIndexDescriptor(Constants.ReviewIndexName)
+                            .Map<Review>(m => m
                                 .AutoMap()
                             );
 
-                    if (!(await client.Indices.ExistsAsync("sentiment")).Exists)
+                    if (!(await client.Indices.ExistsAsync(Constants.ReviewIndexName)).Exists)
                     {
-                        await client.Indices.CreateAsync(workerMapping);
+                        await client.Indices.CreateAsync(mapping);
                     }
                 }
                 catch (Exception ex)
