@@ -18,7 +18,11 @@ namespace GrandCentralDispatch.Contract.Services.ElasticSearch
         public ElasticSearchService(ILoggerFactory loggerFactory, IConfiguration configuration)
         {
             _logger = loggerFactory.CreateLogger<ElasticSearchService>();
-            var pool = new SingleNodeConnectionPool(new Uri(configuration["ELASTICSEARCH_ENDPOINT"]));
+            var endpoint =
+                !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ELASTICSEARCH_ENDPOINT"))
+                    ? Environment.GetEnvironmentVariable("ELASTICSEARCH_ENDPOINT")
+                    : configuration.GetValue<string>("ELASTICSEARCH_ENDPOINT");
+            var pool = new SingleNodeConnectionPool(new Uri(endpoint));
             var connSettings = new ConnectionSettings(pool)
                 .DefaultMappingFor<Review>(m => m
                     .IndexName(Constants.ReviewIndexName)
