@@ -30,14 +30,12 @@ namespace GrandCentralDispatch.Cluster.Controllers
         {
             var requestIdentifier = Guid.NewGuid();
 
-            // We dispatch the func to be executed on a dedicated thread, the Linq expression will not be computed on this thread
             _cluster.Dispatch(requestIdentifier,
                 () => new MovieReview
                 {
                     ReviewText = input.ReviewText
                 });
 
-            // We post directly the value because there is nothing to compute here
             _cluster.Dispatch(requestIdentifier, new MovieDetails
             {
                 Title = input.Title
