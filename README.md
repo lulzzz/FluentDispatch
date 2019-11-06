@@ -95,7 +95,7 @@ GrandCentralDispatch executes your resolver within a **unit of work** which is o
 The nodes support two differents processing strategies: **sequential** or **parallel**.
 
 #### Sequential Processing
-The node can be setup using a sequential approach (_ClusterProcessingType= ClusterProcessingType.Sequential_), meaning that every bulk of items will be sequentially processed. In this mode, the process of an item must be completed prior moving to the next one.
+The node can be setup using a sequential approach (_ClusterProcessingType=ClusterProcessingType.Sequential_), meaning that every bulk of items will be sequentially processed. In this mode, the process of an item must be completed prior moving to the next one.
 
 This type of processing is the least CPU consuming, but may increase the queue size: items are unqueued slower than parallel processing, which may lead to a **higher memory consumption**.
 
@@ -186,7 +186,7 @@ public class ValuesController : ControllerBase
     public IActionResult Get()
     {
         // We post our data in a fire-and-forget way
-        _requestCluster.Dispatch(requestIdentifier, Request.HttpContext.Connection.RemoteIpAddress);
+        _requestCluster.Dispatch(Request.HttpContext.Connection.RemoteIpAddress);
 
         return Ok();
     }
