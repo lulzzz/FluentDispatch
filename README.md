@@ -17,10 +17,15 @@
   - [Resolver](#resolver) 
   - [Node](#node)
   		- [Sequential Processing](#sequential-processing)
+  		
   		- [Parallel Processing](#parallel-processing) 
+  		
   		- [Circuit Breaking](#circuit-breaking)
+  		
   		- [Local Processing](#local-processing)
+  		
   		- [Remote Processing](#remote-processing)
+  		
   		- [Node Queuing Strategy](#node-queuing-strategy)
 	- [Cluster](#cluster) 
 - [Requirements](#requirements)
