@@ -222,7 +222,7 @@ While declaring a single resolver to the cluster is the simplest use case, you m
 ### Partial resolver
 A partial resolver is a generic resolver of type `PartialResolver<TInput1,TOuput1>` where TInput1 is the **input** type to process and TOutput1 is the **output** type which will later be manipulated by your final resolver.
 
-You can compose your cluster with up to 2 partial resolvers, which will compute your workload into intermediate and independant results. 
+You can compose your cluster with up to 2 partial resolvers, which will compute your workload into intermediate and independent results. 
 
 For instance, you may have a `MetadataResolver` resolver which retrieves the informations of a movie (overview, cast, ...) from an API and a `SentimentPredictionResolver` resolver which will use Tensorflow to proceed a sentiment analysis based on a user rating.
 
