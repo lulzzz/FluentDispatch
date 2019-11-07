@@ -9,7 +9,7 @@ namespace GrandCentralDispatch.Node
     {
         static async Task Main(string[] args)
         {
-            var host = GrandCentralDispatchNodeHost<Startup>.CreateDefaultBuilder(true, LogLevel.Information,
+            using var host = GrandCentralDispatchNodeHost<Startup>.CreateDefaultBuilder(true, LogLevel.Information,
                     typeof(Contract.Resolvers.MetadataResolver),
                     typeof(Contract.Resolvers.SentimentPredictionResolver),
                     typeof(Contract.Resolvers.IndexerResolver))

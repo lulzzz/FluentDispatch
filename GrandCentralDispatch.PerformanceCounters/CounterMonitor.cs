@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Diagnostics.Tools.RuntimeClient;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Extensions.Logging;
 
 namespace GrandCentralDispatch.PerformanceCounters
 {
@@ -14,7 +16,7 @@ namespace GrandCentralDispatch.PerformanceCounters
 
         public event Action<CounterEventArgs> CounterUpdate;
 
-        public void Start()
+        public void Start(ILogger logger)
         {
             var configuration = new SessionConfiguration(
                 circularBufferSizeMB: 1000,
@@ -22,6 +24,8 @@ namespace GrandCentralDispatch.PerformanceCounters
                 providers: GetProviders()
             );
 
+            var ports = EventPipeClient.ListAvailablePorts();
+            logger.LogDebug($"IPC available ports for the performance monitoring session: {string.Join("-", ports)}.");
             using var binaryReader =
                 EventPipeClient.CollectTracing(Process.GetCurrentProcess().Id, configuration, out _sessionId);
             using var source = new EventPipeEventSource(binaryReader);

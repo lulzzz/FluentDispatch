@@ -36,7 +36,7 @@ namespace GrandCentralDispatch.Hubs.Hub
             {
                 try
                 {
-                    _counterMonitor.Start();
+                    _counterMonitor.Start(_logger);
                 }
                 catch (Exception ex)
                 {

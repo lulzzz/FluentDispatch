@@ -9,7 +9,7 @@ namespace GrandCentralDispatch.Sample.Web
     {
         public static async Task Main(string[] args)
         {
-            var host = GrandCentralDispatchClusterHost<Startup>
+            using var host = GrandCentralDispatchClusterHost<Startup>
                 .CreateDefaultBuilder(true, LogLevel.Information, false, 5000)
                 .Build();
             await host.RunAsync();

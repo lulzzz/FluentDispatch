@@ -130,7 +130,7 @@ namespace GrandCentralDispatch.Clusters
             {
                 try
                 {
-                    _counterMonitor.Start();
+                    _counterMonitor.Start(Logger);
                 }
                 catch (Exception ex)
                 {
