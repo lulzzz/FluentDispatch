@@ -57,7 +57,9 @@ More details available [here](https://www.nuget.org/packages/GrandCentralDispatc
 
 **GrandCentralDispatch** provides a base class `Resolver<T>` that wraps your processing logic. It exposes an asynchronous and virtual `Process` method that you can override and which will execute whenever you synchronously **post** a new item to be later processed.
 
-The `Process` method gets executed within a round-robin way, which means if you posted **100 items** into the system (the system may be composed of 1 cluster and 2 nodes), and if you've setup the cluster using options _NodeThrottling=10_ and _WindowInMilliseconds=1000_, then you will be able to process **10 items per second**. The remaining items are still waiting in the queue to be later processed.
+The `Process` method gets executed within a round-robin way, which means if you posted **100 items** into the system (the system may be composed of 1 cluster and 2 nodes), and if you've setup the cluster using options _NodeThrottling=10_ ¹ and _WindowInMilliseconds=1000_, then you will be able to process **10 items per second**. The remaining items are still waiting in the queue to be later processed.
+
+¹ _NodeThrottling_ and other options are browsable [here](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch/Options/ClusterOptions.cs) for reference. 
 
 The options provided by GrandCentralDispatch let you specify a way to handle **back-pressure**, by discarding items which could not be processed within the time-window using option _EvictItemsWhenNodesAreFull=true_. This behavior is useful when you want to enforce the main queue to fulfill your predicted throughput without growing unreasonably if you receive a peak of traffic you already know you could not sustain.
 
