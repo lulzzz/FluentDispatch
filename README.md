@@ -17,15 +17,19 @@
 	- [Architecture](#architecture)
 	- [Resolver](#resolver) 
 	- [Node](#node)
-	- [Cluster](#cluster) 
+	- [Cluster](#cluster)
 - [Advanced Usage](#advanced-usage)
-	- [Advanced Node Usage](#advanced-node-usage)
-		- [Sequential Processing](#sequential-processing)
-		- [Parallel Processing](#parallel-processing) 
-		- [Circuit Breaking](#circuit-breaking)
-		- [Local Processing](#local-processing)
-		- [Remote Processing](#remote-processing)
-		- [Node Queuing Strategy](#node-queuing-strategy)
+	- [Sequential Processing](#sequential-processing)
+	- [Parallel Processing](#parallel-processing) 
+	- [Node Queuing Strategy](#node-queuing-strategy)
+- [Circuit Breaking](#circuit-breaking)
+- [Processing Type](#processing-type)
+	- [Local](#local)
+	- [Remote](#remote)
+- [Resolver chaining](#resolver-chaining)
+- [Persistence](#persistence)
+- [Monitoring](#monitoring)
+- [Hosting](#hosting)
 - [Samples](#samples)
 	- [Local Processing](#local-processing)
 	- [Remote Processing](#remote-processing) 
@@ -47,7 +51,7 @@ More details available [here](https://www.nuget.org/packages/GrandCentralDispatc
 
 **GrandCentralDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes (units of work). These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
 
-**GrandCentralDispatch** acts as a load-balancer but on the application level rather than the network level. GCD is able to monitor the health of its remote nodes (CPU usage, ...) and dispatch workload to the healthiest among them in order to anticipate any overwhelm node pior any downtime. 
+**GrandCentralDispatch** acts as a load-balancer but on the application level rather than the network level. GCD is able to monitor the health of its remote nodes (CPU usage, ...) and dispatch workload to the healthiest among them in order to anticipate any overwhelm node prior any downtime. 
  
 ## Resolver
 
@@ -138,7 +142,6 @@ public class Startup : Host.ClusterStartup
 
 GrandCentralDispatch supports **dependency injection**, the cluster will be available through it accross the whole application and relies on a singleton lifetime. You can also declare it and use it manually as explained [here](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Sample/Program.cs).
 
-### Usage
 Once your cluster is defined, you can use it as follow:
 
 ```C#
@@ -173,32 +176,19 @@ The value is posted away from the calling thread, being synchronous and non-bloc
 ## Advanced Usage
 The nodes support two differents processing strategies: **sequential** or **parallel**.
 
-#### Sequential Processing
+### Sequential Processing
 The node can be setup using a sequential approach (_ClusterProcessingType=ClusterProcessingType.Sequential_), meaning that every bulk of items will be sequentially processed. In this mode, the process of an item must be completed prior moving to the next one.
 
 This type of processing is the least CPU consuming, but may increase the queue size: items are unqueued slower than parallel processing, which may lead to a **higher memory consumption**.
 
-#### Parallel Processing
+### Parallel Processing
 The node processes bulk of items in parallel (_ClusterProcessingType=ClusterProcessingType.Parallel_). In this mode, the completion of an item's process is non-blocking in regards of the other items: the node can process several items at the same time depending on the degree of parallelism of your processor (a 4-core processor will process twice as much as a 2-core processor).
 
 This type of processing is more CPU consuming, but it's optimal in regards of the queue size: items are fastly unqueued which **reduce the memory consumption**.
 
-### Circuit Breaking
-The resiliency of the item's processing within the resolver by each node is ensured by a circuit breaker whose options can be setup through **CircuitBreakerOptions**. 
-
-Whenever your `Process` method raises an exception, it will be catch up by the circuit breaker, and depending on the threshold you specified, the circuit may open to protect your node. Additionally, the `Process` method can retry if the option **RetryAttempt** is > 0.
-
-Also, every node is independent from the others so that an opened circuit will not impact the other nodes. **Making sure one fault doesn't sink the whole ship**.
-
-### Local Processing
-By default, a node is a local unit of work, which translates to a simple thread managed by the .NET Threadpool. 
-
-### Remote Processing
-GrandCentralDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Node).
-
+### Node Queuing Strategy
 Whenever new items are available to be processed, the cluster will dispatch them to the available nodes depending on the **NodeQueuingStrategy** option.
 
-### Node Queuing Strategy
 #### Randomized
 Items are queued to nodes randomly.
 
@@ -208,14 +198,28 @@ Items are queued to least populated nodes first.
 #### Healthiest
 Items are queued to healthiest nodes first, taking into account CPU usage of remote nodes.
 
-### Resolver chaining
+## Circuit Breaking
+The resiliency of the item's processing within the resolver by each node is ensured by a circuit breaker whose options can be setup through **CircuitBreakerOptions**. 
 
-### Persistence
+Whenever your `Process` method raises an exception, it will be catch up by the circuit breaker, and depending on the threshold you specified, the circuit may open to protect your node. Additionally, the `Process` method can retry if the option **RetryAttempt** is > 0.
 
+Also, every node is independent from the others so that an opened circuit will not impact the other nodes. **Making sure one fault doesn't sink the whole ship**.
 
-### Monitoring
+## Processing Type
+### Local
+By default, a node is a local unit of work, which translates to a simple thread managed by the .NET Threadpool. 
 
-### Hosting
+### Remote
+GrandCentralDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Node).
+
+## Resolver chaining
+While declaring a single resolver to the cluster is the simplest use case, you may need to process 
+
+## Persistence
+
+## Monitoring
+
+## Hosting
 
 ## Samples
 ### Local Processing
@@ -253,9 +257,8 @@ The results of each request is then accessible through Kibana under the index `s
 
 ## Requirements
 
-**GrandCentralDispatch** framework requires .NET Standard 2.1 support, and it is available for applications targeting:
+**GrandCentralDispatch** framework requires .NET Standard 2.1 support, and is available for applications targeting .NET Core >= 3.0, thus supporting Windows/Linux/macOS environments.
 
 
-- .NET Core >= 3.0
 
 Additionally, you need Docker to run remote-based samples on your PC.
