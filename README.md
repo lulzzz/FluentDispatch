@@ -213,13 +213,57 @@ By default, a node is a local unit of work, which translates to a simple thread 
 GrandCentralDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Node).
 
 ## Resolver chaining
-While declaring a single resolver to the cluster is the simplest use case, you may need to process 
+While declaring a single resolver to the cluster is the simplest use case, you may need to compute several and independent tasks to your incoming workload, before having to deal with a final result. 
+
+**GrandCentralDispatch** is able to decouple your workflow into several _partial_ resolvers without tied-coupling them, whose result will be computed by a _final_ resolver.
+
+### Partial resolver
+A partial resolver is a generic resolver of type `PartialResolver<TInput1,TOuput1>` where TInput1 is the **input** type to process and TOutput1 is the **output** type which will later be manipulated by your final resolver.
+
+You can compose your cluster with up to 2 partial resolvers, which will compute your workload into intermediate and independant results. 
+
+For instance, you may have a `MetadataResolver` resolver which retrieves the informations of a movie (overview, cast, ...) from an API and a `SentimentPredictionResolver` resolver which will use Tensorflow to proceed a sentiment analysis based on a user rating.
+
+Both of these resolvers are independent and thus are computed in parallel.
+
+### Final resolver
+The final resolver is a generic resolver of type `DualResolver<TOutput1, TOutput2>` where TOutput1 is the result type of your first partial resolver and TOutput2 is the result type of your second partial resolver.
+
+This resolver will then be able to process both of the computed results based on your custom implementation.
+
+For instance, you may have a `IndexerResolver` resolver which indexes both the movie metadata computed from `MetadataResolver` as well as the sentiment analysis (user liked/disliked the movie) computed from `SentimentPredictionResolver` into an ElasticSearch cluster.
 
 ## Persistence
+**GrandCentralDispatch** is able to store on disk and in real-time the workload submitted to the cluster. 
+
+Persistence feature let the cluster recover from a hard failure (power outage, crash, ...) while resuming on the items which have not been fully processed prior the incident.
+
+Be aware this feature introduces a non-negligeable overhead, due to on-the-fly serializing and storing, which is why this feature is disabled by default (_PersistenceEnabled=false_). 
 
 ## Monitoring
+**GrandCentralDispatch** is able to expose key metrics (node/cluster performance counters, throughput, Apdex score, latency, ...) through InfluxDB using AppMetrics. 
+
+The logic is implemented through the NuGet package GrandCentralDispatch.Monitoring.
+
+```
+Install-Package GrandCentralDispatch.Monitoring
+```
+
+More details available [here](https://www.nuget.org/packages/GrandCentralDispatch.Monitoring/).
 
 ## Hosting
+**GrandCentralDispatch** facilitates its integration to an IHost instance by providing:
+
+- [GrandCentralDispatchClusterHost](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Host/Hosting/GrandCentralDispatchClusterHost.cs): Scaffolds the cluster by offering a convenient way to provide cluster options, logging options, monitoring and port binding. 
+- [GrandCentralDispatchNodeHost](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Host/Hosting/GrandCentralDispatchNodeHost.cs): Scaffolds the node by offering a convenient way to provide resolver types, logging options and port binding. 
+
+The logic is implemented through the NuGet package GrandCentralDispatch.Host.
+
+```
+Install-Package GrandCentralDispatch.Host
+```
+
+More details available [here](https://www.nuget.org/packages/GrandCentralDispatch.Host/).
 
 ## Samples
 ### Local Processing
@@ -233,6 +277,8 @@ The sample is a .NET Core 3.0 console application which uses **GrandCentralDispa
 ![Sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/sample.png)
 
 ![Animated sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/animated-sample.gif)
+
+This sample demonstrates the ability to offload a heavy process away from the main thread (the thread is still responsive while dispatching the messages) in a non-blocking and synchronous way (i.e fire and forget).
 
 ### Remote Processing
 The sample is decoupled in 3 parts:
@@ -263,9 +309,11 @@ The cluster dispatches the content of this request to its healthiest remote node
 
 ElasticSearch is automatically deployed through Docker as well as the Node, Cluster, monitoring stack (InfluxDB, Grafana) and other ELK stack tools (Logstash and Kibana).
 
-You only need to execute this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
+After cloning this repository, you only need to execute this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
 
 The results of each request is then accessible through Kibana under the index `sentiment` (http://localhost:5601) and monitoring is available through Grafana (http://localhost:3000).
+
+This sample demonstrates the ability to dispatch a workload to remote machines in order to guarantee a high availability. It works similarly to a load-balancer, but on the application level.
 
 **Processing**
 
