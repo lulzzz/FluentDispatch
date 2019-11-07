@@ -26,6 +26,9 @@
 		- [Local Processing](#local-processing)
 		- [Remote Processing](#remote-processing)
 		- [Node Queuing Strategy](#node-queuing-strategy)
+- [Samples](#samples)
+	- [Local Processing](#local-processing)
+	- [Remote Processing](#remote-processing) 
 - [Requirements](#requirements)
 
 # Installing from NuGet
@@ -42,7 +45,7 @@ More details available [here](https://www.nuget.org/packages/GrandCentralDispatc
 ## Architecture
 ![Architecture](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Architecture.png)
 
-**GrandCentralDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes. These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
+**GrandCentralDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes (units of work). These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
 
 **GrandCentralDispatch** acts as a load-balancer but on the application level rather than the network level. GCD is able to monitor the health of its remote nodes (CPU usage, ...) and dispatch workload to the healthiest among them in order to anticipate any overwhelm node pior any downtime. 
  
@@ -204,6 +207,49 @@ Items are queued to least populated nodes first.
 
 #### Healthiest
 Items are queued to healthiest nodes first, taking into account CPU usage of remote nodes.
+
+### Resolver chaining
+
+### Persistence
+
+
+### Monitoring
+
+### Hosting
+
+## Samples
+### Local Processing
+
+
+### Remote Processing
+The sample is decoupled in 3 parts:
+
+- [Node](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Host): deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
+- [Cluster](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Cluster): exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
+- [Contract](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Contract): assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
+
+The goal is to send POST requests to the cluster (http://localhost:5432/api/sentiment) containing a JSON body:
+
+```
+{
+	'Title': 'Avatar',
+	'ReviewText': 'good movie!'
+}
+```
+
+The cluster dispatches the content of this request to its healthiest remote nodes using gRPC, on which two resolvers are called independently (they are not tied coupled):
+
+-	[MetadataResolver](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
+- [SentimentPredictionResolver](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Contract/Resolvers/SentimentPredictionResolver.cs): Uses Tensorflow and processes a text analysis to extract the sentiment behind the ReviewText property. 
+- [IndexerResolver](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Contract/Resolvers/IndexerResolver.cs): Waits for the 2 first resolvers to finish and indexes the result (title, movie overview and user-based movie sentiment: i.e liked or disliked) in ElasticSearch.
+
+ElasticSearch is automatically deployed through Docker as well as the Node, Cluster, monitoring stack (InfluxDB, Grafana) and other ELK stack tools (Logstash and Kibana).
+
+You only need to execute this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
+
+The results of each request is then accessible through Kibana under the index `sentiment` (http://localhost:5601) and monitoring is available through Grafana (http://localhost:3000).
+
+![Remote sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/remote-sample.gif)
 
 ## Requirements
 
