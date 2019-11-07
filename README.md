@@ -14,15 +14,18 @@
 
 - [Installing from NuGet](#installing-from-nuget)
 - [Quick start](#quick-start)
+	- [Architecture](#architecture)
 	- [Resolver](#resolver) 
 	- [Node](#node)
+	- [Cluster](#cluster) 
+- [Advanced Usage](#advanced-usage)
+	- [Advanced Node Usage](#advanced-node-usage)
 		- [Sequential Processing](#sequential-processing)
 		- [Parallel Processing](#parallel-processing) 
 		- [Circuit Breaking](#circuit-breaking)
 		- [Local Processing](#local-processing)
 		- [Remote Processing](#remote-processing)
 		- [Node Queuing Strategy](#node-queuing-strategy)
-	- [Cluster](#cluster) 
 - [Requirements](#requirements)
 
 # Installing from NuGet
@@ -36,6 +39,13 @@ Install-Package GrandCentralDispatch
 More details available [here](https://www.nuget.org/packages/GrandCentralDispatch/).
 
 # Quick Start
+## Architecture
+![Architecture](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Architecture.png)
+
+**GrandCentralDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes. These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
+
+**GrandCentralDispatch** acts as a load-balancer but on the application level rather than the network level. GCD is able to monitor the health of its remote nodes (CPU usage, ...) and dispatch workload to the healthiest among them in order to anticipate any overwhelm node pior any downtime. 
+ 
 ## Resolver
 
 **GrandCentralDispatch** provides a base class `Resolver<T>` that wraps your processing logic. It exposes an asynchronous and virtual `Process` method that you can override and which will execute whenever you synchronously **post** a new item to be later processed.
@@ -91,43 +101,6 @@ There are several tips we notice here:
 Now you've been introduced to the concept of a *resolver*, let's digg into the node concept. 
 
 GrandCentralDispatch executes your resolver within a **unit of work** which is orchestrated by its cluster. Each node processes its own chunk of items, which corresponds to a slice of the main queue whose items are unqueued in a periodical way (up to **NodeThrottling** count and within **WindowInMilliseconds** time-window) and added to the node assignment work. 
-
-The nodes support two differents processing strategies: **sequential** or **parallel**.
-
-#### Sequential Processing
-The node can be setup using a sequential approach (_ClusterProcessingType=ClusterProcessingType.Sequential_), meaning that every bulk of items will be sequentially processed. In this mode, the process of an item must be completed prior moving to the next one.
-
-This type of processing is the least CPU consuming, but may increase the queue size: items are unqueued slower than parallel processing, which may lead to a **higher memory consumption**.
-
-#### Parallel Processing
-The node processes bulk of items in parallel (_ClusterProcessingType=ClusterProcessingType.Parallel_). In this mode, the completion of an item's process is non-blocking in regards of the other items: the node can process several items at the same time depending on the degree of parallelism of your processor (a 4-core processor will process twice as much as a 2-core processor).
-
-This type of processing is more CPU consuming, but it's optimal in regards of the queue size: items are fastly unqueued which **reduce the memory consumption**.
-
-### Circuit Breaking
-The resiliency of the item's processing within the resolver by each node is ensured by a circuit breaker whose options can be setup through **CircuitBreakerOptions**. 
-
-Whenever your `Process` method raises an exception, it will be catch up by the circuit breaker, and depending on the threshold you specified, the circuit may open to protect your node. Additionally, the `Process` method can retry if the option **RetryAttempt** is > 0.
-
-Also, every node is independent from the others so that an opened circuit will not impact the other nodes. **Making sure one fault doesn't sink the whole ship**.
-
-### Local Processing
-By default, a node is a local unit of work, which translates to a simple thread managed by the .NET Threadpool. 
-
-### Remote Processing
-GrandCentralDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Node).
-
-Whenever new items are available to be processed, the cluster will dispatch them to the available nodes depending on the **NodeQueuingStrategy** option.
-
-### Node Queuing Strategy
-#### Randomized
-Items are queued to nodes randomly.
-
-#### Best Effort
-Items are queued to least populated nodes first.
-
-#### Healthiest
-Items are queued to healthiest nodes first, taking into account CPU usage of remote nodes.
 
 ## Cluster
 The cluster is the **main entry point** of your distributed system, which will dispatch your load accross all available nodes.
@@ -192,10 +165,47 @@ public class ValuesController : ControllerBase
     }
 }
 ```
-
 The value is posted away from the calling thread, being synchronous and non-blocking, to be later processed by the 5 local nodes through the defined resolver.
 
-# Requirements
+## Advanced Usage
+The nodes support two differents processing strategies: **sequential** or **parallel**.
+
+#### Sequential Processing
+The node can be setup using a sequential approach (_ClusterProcessingType=ClusterProcessingType.Sequential_), meaning that every bulk of items will be sequentially processed. In this mode, the process of an item must be completed prior moving to the next one.
+
+This type of processing is the least CPU consuming, but may increase the queue size: items are unqueued slower than parallel processing, which may lead to a **higher memory consumption**.
+
+#### Parallel Processing
+The node processes bulk of items in parallel (_ClusterProcessingType=ClusterProcessingType.Parallel_). In this mode, the completion of an item's process is non-blocking in regards of the other items: the node can process several items at the same time depending on the degree of parallelism of your processor (a 4-core processor will process twice as much as a 2-core processor).
+
+This type of processing is more CPU consuming, but it's optimal in regards of the queue size: items are fastly unqueued which **reduce the memory consumption**.
+
+### Circuit Breaking
+The resiliency of the item's processing within the resolver by each node is ensured by a circuit breaker whose options can be setup through **CircuitBreakerOptions**. 
+
+Whenever your `Process` method raises an exception, it will be catch up by the circuit breaker, and depending on the threshold you specified, the circuit may open to protect your node. Additionally, the `Process` method can retry if the option **RetryAttempt** is > 0.
+
+Also, every node is independent from the others so that an opened circuit will not impact the other nodes. **Making sure one fault doesn't sink the whole ship**.
+
+### Local Processing
+By default, a node is a local unit of work, which translates to a simple thread managed by the .NET Threadpool. 
+
+### Remote Processing
+GrandCentralDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Node).
+
+Whenever new items are available to be processed, the cluster will dispatch them to the available nodes depending on the **NodeQueuingStrategy** option.
+
+### Node Queuing Strategy
+#### Randomized
+Items are queued to nodes randomly.
+
+#### Best Effort
+Items are queued to least populated nodes first.
+
+#### Healthiest
+Items are queued to healthiest nodes first, taking into account CPU usage of remote nodes.
+
+## Requirements
 
 **GrandCentralDispatch** framework requires .NET Standard 2.1 support, and it is available for applications targeting:
 
