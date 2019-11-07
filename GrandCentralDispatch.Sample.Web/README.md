@@ -1,1 +1,0 @@
-The whole point here is to associate headers and geolocation from each incoming request.

@@ -171,7 +171,7 @@ public class ValuesController : ControllerBase
     }
 }
 ```
-The value is posted away from the calling thread, being synchronous and non-blocking, to be later processed by the 5 local nodes through the defined resolver.
+The value is posted away from the calling thread, being synchronous and non-blocking, to be later processed by one of the 5 local nodes through the defined resolver.
 
 ## Advanced Usage
 The nodes support two differents processing strategies: **sequential** or **parallel**.
@@ -223,14 +223,23 @@ While declaring a single resolver to the cluster is the simplest use case, you m
 
 ## Samples
 ### Local Processing
+The sample is a .NET Core 3.0 console application which uses **GrandCentralDispatch** to:
 
+- Send 10 000 messages to the cluster.
+- Dispatch them to 10 local nodes.
+- The resolver processes each of the incoming messages to compute a Fibonacci number (1000) and await for 125ms delay (which simulates a short I/O).
+- Prints in the console the throughput of the cluster (msg/s) as well as the throughput of each individual nodes.
+
+![Sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/sample.png)
+
+![Animated sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/animated-sample.gif)
 
 ### Remote Processing
 The sample is decoupled in 3 parts:
 
-- [Node](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Host): deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
-- [Cluster](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Cluster): exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
-- [Contract](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Contract): assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
+- [Node](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Host): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
+- [Cluster](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Cluster): .NET Core 3.0 Web Host which exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
+- [Contract](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Contract): .NET Standard 2.1 assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
 
 The goal is to send POST requests to the cluster (http://localhost:5432/api/sentiment) containing a JSON body:
 
