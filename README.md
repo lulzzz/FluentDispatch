@@ -269,7 +269,7 @@ More details available [here](https://www.nuget.org/packages/GrandCentralDispatc
 
 ## Samples
 ### Local Processing
-The sample is a .NET Core 3.0 console application which uses **GrandCentralDispatch** to:
+The [sample](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Sample) is a .NET Core 3.0 console application which uses **GrandCentralDispatch** to:
 
 - Send 10 000 messages to the cluster.
 - Dispatch them to 10 local nodes.
