@@ -10,12 +10,14 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Primitives;
+using Microsoft.IO;
 
 namespace GrandCentralDispatch.Cache
 {
     internal class PersistentCacheProvider : ICacheProvider
     {
         private readonly SqliteConnection _dbConnection;
+        private readonly RecyclableMemoryStreamManager _recyclableMemoryStreamManager;
         private readonly LazyCache.IAppCache _cache;
         private readonly ILogger _logger;
 
@@ -24,6 +26,7 @@ namespace GrandCentralDispatch.Cache
         {
             _dbConnection = dbConnection;
             _cache = cache;
+            _recyclableMemoryStreamManager = new RecyclableMemoryStreamManager();
             _logger = loggerFactory == null
                 ? NullLogger<PersistentCacheProvider>.Instance
                 : loggerFactory.CreateLogger<PersistentCacheProvider>();
@@ -39,7 +42,7 @@ namespace GrandCentralDispatch.Cache
                 {
                     Size = 1,
                     Priority = CacheItemPriority.Normal,
-                    ExpirationTokens = {new CancellationChangeToken(ct)},
+                    ExpirationTokens = { new CancellationChangeToken(ct) },
                     PostEvictionCallbacks =
                     {
                         new PostEvictionCallbackRegistration
@@ -71,7 +74,7 @@ namespace GrandCentralDispatch.Cache
                 {
                     Size = 1,
                     Priority = CacheItemPriority.Normal,
-                    ExpirationTokens = {new CancellationChangeToken(ct)},
+                    ExpirationTokens = { new CancellationChangeToken(ct) },
                     PostEvictionCallbacks =
                     {
                         new PostEvictionCallbackRegistration
@@ -103,7 +106,7 @@ namespace GrandCentralDispatch.Cache
                 {
                     Size = 1,
                     Priority = CacheItemPriority.Normal,
-                    ExpirationTokens = {new CancellationChangeToken(ct)},
+                    ExpirationTokens = { new CancellationChangeToken(ct) },
                     PostEvictionCallbacks =
                     {
                         new PostEvictionCallbackRegistration
@@ -261,34 +264,34 @@ namespace GrandCentralDispatch.Cache
             }
         }
 
-        private static async Task<byte[]> Serialize<TInput>(TInput input)
+        private async Task<byte[]> Serialize<TInput>(TInput input)
         {
-            using (var memoryStream = new MemoryStream())
+            using (var memoryStream = _recyclableMemoryStreamManager.GetStream(nameof(Serialize)))
             {
                 await MessagePackSerializer.SerializeAsync(memoryStream, input);
                 return memoryStream.ToArray();
             }
         }
 
-        private static async Task<TOutput> Deserialize<TOutput>(byte[] data)
+        private async Task<TOutput> Deserialize<TOutput>(byte[] data)
         {
-            using (var memoryStream = new MemoryStream(data))
+            using (var memoryStream = _recyclableMemoryStreamManager.GetStream(nameof(Deserialize), data, 0, data.Length))
             {
                 return await MessagePackSerializer.DeserializeAsync<TOutput>(memoryStream);
             }
         }
 
-        private static byte[] GetBytes(IDataRecord reader, int column)
+        private byte[] GetBytes(IDataRecord reader, int column)
         {
             const int chunkSize = 2 * 1024;
             var buffer = new byte[chunkSize];
             long fieldOffset = 0;
-            using (var stream = new MemoryStream())
+            using (var stream = _recyclableMemoryStreamManager.GetStream(nameof(GetBytes)))
             {
                 long bytesRead;
                 while ((bytesRead = reader.GetBytes(column, fieldOffset, buffer, 0, buffer.Length)) > 0)
                 {
-                    stream.Write(buffer, 0, (int) bytesRead);
+                    stream.Write(buffer, 0, (int)bytesRead);
                     fieldOffset += bytesRead;
                 }
 
