@@ -5,6 +5,9 @@
 </h1>
 
 [![NuGet](https://img.shields.io/nuget/v/GrandCentralDispatch.svg)](https://www.nuget.org/packages/GrandCentralDispatch/) [![NuGet](https://img.shields.io/nuget/dt/GrandCentralDispatch.svg)](https://www.nuget.org/stats/packages/GrandCentralDispatch?groupby=Version)
+<p align="left">
+  <a href="https://github.com/bbougot/GrandCentralDispatch/actions"><img alt="GitHub Actions status" src="https://github.com/bbougot/GrandCentralDispatch/workflows/.NET%20Core/badge.svg"></a>
+</p>
 
 # What is it?
 
