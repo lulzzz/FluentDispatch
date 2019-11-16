@@ -47,7 +47,7 @@ More details available [here](https://www.nuget.org/packages/GrandCentralDispatc
 
 # Quick Start
 ## Architecture
-![Architecture](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Architecture.png)
+![Architecture](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/Architecture.png)
 
 **GrandCentralDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes (units of work). These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
 
@@ -276,9 +276,9 @@ The [sample](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCe
 - The resolver processes each of the incoming messages to compute a Fibonacci number (1000) and await for 125ms delay (which simulates a short I/O).
 - Prints in the console the throughput of the cluster (msg/s) as well as the throughput of each individual nodes.
 
-![Sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/sample.png)
+![Sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/sample.png)
 
-![Animated sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/animated-sample.gif)
+![Animated sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/animated-sample.gif)
 
 This sample demonstrates the ability to offload a heavy process away from the main thread (the thread is still responsive while dispatching the messages) in a non-blocking and synchronous way (i.e fire and forget).
 
@@ -319,11 +319,11 @@ This sample demonstrates the ability to dispatch a workload to remote machines i
 
 **Processing**
 
-![Remote sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/remote-sample.gif)
+![Remote sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/remote-sample.gif)
 
 **Monitoring**
 
-![Monitoring](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/monitoring.gif)
+![Monitoring](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/monitoring.gif)
 
 ## Requirements
 
