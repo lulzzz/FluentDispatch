@@ -11,8 +11,8 @@
     <PackageReference Include="Microsoft.ML" Version="1.4.0" />
     <PackageReference Include="Microsoft.ML.SampleUtils" Version="0.16.0" />
     <PackageReference Include="Microsoft.ML.TensorFlow" Version="1.4.0" />
-    <PackageReference Include="NEST" Version="7.4.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="NEST" Version="7.4.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="TMDbLib" Version="1.4.0" />
   </ItemGroup>
 

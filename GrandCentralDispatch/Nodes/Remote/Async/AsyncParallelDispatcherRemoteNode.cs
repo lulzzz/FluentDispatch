@@ -186,7 +186,7 @@ namespace GrandCentralDispatch.Nodes.Remote.Async
         /// <returns><see cref="TOutput"/></returns>
         public async Task<TOutput> DispatchAsync(TInput item, CancellationToken cancellationToken)
         {
-            var taskCompletionSource = new TaskCompletionSource<TOutput>();
+            var taskCompletionSource = new TaskCompletionSource<TOutput>(TaskCreationOptions.RunContinuationsAsynchronously);
             return await AddAsync(new AsyncItem<TInput, TOutput>(taskCompletionSource, item, cancellationToken));
         }
 

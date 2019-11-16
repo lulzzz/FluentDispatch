@@ -10,7 +10,7 @@ namespace GrandCentralDispatch.Extensions
         {
             if (ct.CanBeCanceled && !task.IsCompleted)
             {
-                var tcs = new TaskCompletionSource<bool>();
+                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                 if (ct.IsCancellationRequested)
                 {
                     tcs.TrySetCanceled();
@@ -47,7 +47,7 @@ namespace GrandCentralDispatch.Extensions
         {
             if (ct.CanBeCanceled && !task.IsCompleted)
             {
-                var tcs = new TaskCompletionSource<T>();
+                var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
                 if (ct.IsCancellationRequested)
                 {
                     tcs.TrySetCanceled();

@@ -157,7 +157,7 @@ namespace GrandCentralDispatch.Nodes.Local.Async
         public async Task<TOutput> DispatchAsync(Func<TInput, Task<TOutput>> selector, TInput item,
             CancellationToken cancellationToken)
         {
-            var taskCompletionSource = new TaskCompletionSource<TOutput>();
+            var taskCompletionSource = new TaskCompletionSource<TOutput>(TaskCreationOptions.RunContinuationsAsynchronously);
             return await AddAsync(
                 new AsyncPredicateItem<TInput, TOutput>(taskCompletionSource, selector, item, cancellationToken));
         }
