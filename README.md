@@ -1,17 +1,17 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/Logo.png" height="128" width="128" alt="Logo" />
+  <img src="https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/logo.png" height="128" width="128" alt="Logo" />
   <br />
-  GrandCentralDispatch
+  FluentDispatch
 </h1>
 
-[![NuGet](https://img.shields.io/nuget/v/GrandCentralDispatch.svg)](https://www.nuget.org/packages/GrandCentralDispatch/) [![NuGet](https://img.shields.io/nuget/dt/GrandCentralDispatch.svg)](https://www.nuget.org/stats/packages/GrandCentralDispatch?groupby=Version)
+[![NuGet](https://img.shields.io/nuget/v/FluentDispatch.svg)](https://www.nuget.org/packages/FluentDispatch/) [![NuGet](https://img.shields.io/nuget/dt/FluentDispatch.svg)](https://www.nuget.org/stats/packages/FluentDispatch?groupby=Version)
 <p align="left">
-  <a href="https://github.com/bbougot/GrandCentralDispatch/actions"><img alt="GitHub Actions status" src="https://github.com/bbougot/GrandCentralDispatch/workflows/.NET%20Core/badge.svg"></a>
+  <a href="https://github.com/bbougot/FluentDispatch/actions"><img alt="GitHub Actions status" src="https://github.com/bbougot/FluentDispatch/workflows/.NET%20Core/badge.svg"></a>
 </p>
 
 # What is it?
 
-**GrandCentralDispatch** is a .NET Standard 2.1 framework which makes easy to scaffold distributed systems and dispatch incoming load into units of work in a deterministic way. This framework is useful whenever you want to process a heavy workload coming from a specific source of data (i.e message broker, web endpoint, ...) in a non-blocking way (fire-and-forget pattern) but still being able to benefit from resiliency features (circuit beaking, back pressure, ...). The framework can be used to dispatch load into units of work **locally** (using .NET Threadpool) or **remotely** (using Remote Procedure Calls).
+**FluentDispatch** is a .NET Standard 2.1 framework which makes easy to scaffold distributed systems and dispatch incoming load into units of work in a deterministic way. This framework is useful whenever you want to process a heavy workload coming from a specific source of data (i.e message broker, web endpoint, ...) in a non-blocking way (fire-and-forget pattern) but still being able to benefit from resiliency features (circuit beaking, back pressure, ...). The framework can be used to dispatch load into units of work **locally** (using .NET Threadpool) or **remotely** (using Remote Procedure Calls).
 
 # Table of Contents
 
@@ -40,31 +40,31 @@
 
 # Installing from NuGet
 
-To install **GrandCentralDispatch**, run the following command in the **Package Manager Console**
+To install **FluentDispatch**, run the following command in the **Package Manager Console**
 
 ```
-Install-Package GrandCentralDispatch
+Install-Package FluentDispatch
 ```
 
-More details available [here](https://www.nuget.org/packages/GrandCentralDispatch/).
+More details available [here](https://www.nuget.org/packages/FluentDispatch/).
 
 # Quick Start
 ## Architecture
-![Architecture](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/Architecture.png)
+![Architecture](https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/architecture.png)
 
-**GrandCentralDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes (units of work). These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
+**FluentDispatch** handles the incoming load and delegates the ingress traffic as chunks to event loop schedulers which dispatch them to their own nodes (units of work). These nodes are either local threads managed by the .NET Threadpool or remote nodes which are called through Remote Procedure Call.
 
-**GrandCentralDispatch** acts as a load-balancer but on the application level rather than the network level. GCD is able to monitor the health of its remote nodes (CPU usage, ...) and dispatch workload to the healthiest among them in order to anticipate any overwhelm node prior any downtime. 
+**FluentDispatch** acts as a load-balancer but on the application level rather than the network level. FluentDispatch is able to monitor the health of its remote nodes (CPU usage, ...) and dispatch workload to the healthiest among them in order to anticipate any overwhelm node prior any downtime. 
  
 ## Resolver
 
-**GrandCentralDispatch** provides a base class `Resolver<T>` that wraps your processing logic. It exposes an asynchronous and virtual `Process` method that you can override and which will execute whenever you synchronously **post** a new item to be later processed.
+**FluentDispatch** provides a base class `Resolver<T>` that wraps your processing logic. It exposes an asynchronous and virtual `Process` method that you can override and which will execute whenever you synchronously **post** a new item to be later processed.
 
 The `Process` method gets executed within a round-robin way, which means if you posted **100 items** into the system (the system may be composed of 1 cluster and 2 nodes), and if you've setup the cluster using options _NodeThrottling=10_ ¹ and _WindowInMilliseconds=1000_, then you will be able to process **10 items per second**. The remaining items are still waiting in the queue to be later processed.
 
-¹ _NodeThrottling_ and other options are browsable [here](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch/Options/ClusterOptions.cs) for reference. 
+¹ _NodeThrottling_ and other options are browsable [here](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch/Options/ClusterOptions.cs) for reference. 
 
-The options provided by GrandCentralDispatch let you specify a way to handle **back-pressure**, by discarding items which could not be processed within the time-window using option _EvictItemsWhenNodesAreFull=true_. This behavior is useful when you want to enforce the main queue to fulfill your predicted throughput without growing unreasonably if you receive a peak of traffic you already know you could not sustain.
+The options provided by FluentDispatch let you specify a way to handle **back-pressure**, by discarding items which could not be processed within the time-window using option _EvictItemsWhenNodesAreFull=true_. This behavior is useful when you want to enforce the main queue to fulfill your predicted throughput without growing unreasonably if you receive a peak of traffic you already know you could not sustain.
 
 Let's write a simple resolver which will compute the geolocation from a request's IP.
 
@@ -112,7 +112,7 @@ There are several tips we notice here:
 ## Node
 Now you've been introduced to the concept of a *resolver*, let's digg into the node concept. 
 
-GrandCentralDispatch executes your resolver within a **unit of work** which is orchestrated by its cluster. Each node processes its own chunk of items, which corresponds to a slice of the main queue whose items are unqueued in a periodical way (up to **NodeThrottling** count and within **WindowInMilliseconds** time-window) and added to the node assignment work. 
+FluentDispatch executes your resolver within a **unit of work** which is orchestrated by its cluster. Each node processes its own chunk of items, which corresponds to a slice of the main queue whose items are unqueued in a periodical way (up to **NodeThrottling** count and within **WindowInMilliseconds** time-window) and added to the node assignment work. 
 
 ## Cluster
 The cluster is the **main entry point** of your distributed system, which will dispatch your load accross all available nodes.
@@ -145,7 +145,7 @@ public class Startup : Host.ClusterStartup
 }
 ```
 
-GrandCentralDispatch supports **dependency injection**, the cluster will be available through it accross the whole application and relies on a singleton lifetime. You can also declare it and use it manually as explained [here](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Sample/Program.cs).
+FluentDispatch supports **dependency injection**, the cluster will be available through it accross the whole application and relies on a singleton lifetime. You can also declare it and use it manually as explained [here](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Sample/Program.cs).
 
 Once your cluster is defined, you can use it as follow:
 
@@ -215,12 +215,12 @@ Also, every node is independent from the others so that an opened circuit will n
 By default, a node is a local unit of work, which translates to a simple thread managed by the .NET Threadpool. 
 
 ### Remote
-GrandCentralDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Node).
+FluentDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Node).
 
 ## Resolver chaining
 While declaring a single resolver to the cluster is the simplest use case, you may need to compute several and independent tasks to your incoming workload, before having to deal with a final result. 
 
-**GrandCentralDispatch** is able to decouple your workflow into several _partial_ resolvers without tied-coupling them, whose result will be computed by a _final_ resolver.
+**FluentDispatch** is able to decouple your workflow into several _partial_ resolvers without tied-coupling them, whose result will be computed by a _final_ resolver.
 
 ### Partial resolver
 A partial resolver is a generic resolver of type `PartialResolver<TInput1,TOuput1>` where TInput1 is the **input** type to process and TOutput1 is the **output** type which will later be manipulated by your final resolver.
@@ -239,58 +239,58 @@ This resolver will then be able to process both of the computed results based on
 For instance, you may have a `IndexerResolver` resolver which indexes both the movie metadata computed from `MetadataResolver` as well as the sentiment analysis (user liked/disliked the movie) computed from `SentimentPredictionResolver` into an ElasticSearch cluster.
 
 ## Persistence
-**GrandCentralDispatch** is able to store on disk and in real-time the workload submitted to the cluster. 
+**FluentDispatch** is able to store on disk and in real-time the workload submitted to the cluster. 
 
 Persistence feature let the cluster recover from a hard failure (power outage, crash, ...) while resuming on the items which have not been fully processed prior the incident.
 
 Be aware this feature introduces a non-negligeable overhead, due to on-the-fly serializing and storing, which is why this feature is disabled by default (_PersistenceEnabled=false_). 
 
 ## Monitoring
-**GrandCentralDispatch** is able to expose key metrics (node/cluster performance counters, throughput, Apdex score, latency, ...) through InfluxDB using AppMetrics. 
+**FluentDispatch** is able to expose key metrics (node/cluster performance counters, throughput, Apdex score, latency, ...) through InfluxDB using AppMetrics. 
 
-The logic is implemented through the NuGet package GrandCentralDispatch.Monitoring.
+The logic is implemented through the NuGet package FluentDispatch.Monitoring.
 
 ```
-Install-Package GrandCentralDispatch.Monitoring
+Install-Package FluentDispatch.Monitoring
 ```
 
-More details available [here](https://www.nuget.org/packages/GrandCentralDispatch.Monitoring/).
+More details available [here](https://www.nuget.org/packages/FluentDispatch.Monitoring/).
 
 ## Hosting
-**GrandCentralDispatch** facilitates its integration to an IHost instance by providing:
+**FluentDispatch** facilitates its integration to an IHost instance by providing:
 
-- [GrandCentralDispatchClusterHost](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Host/Hosting/GrandCentralDispatchClusterHost.cs): Scaffolds the cluster by offering a convenient way to provide cluster options, logging options, monitoring and port binding. 
-- [GrandCentralDispatchNodeHost](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Host/Hosting/GrandCentralDispatchNodeHost.cs): Scaffolds the node by offering a convenient way to provide resolver types, logging options and port binding. 
+- [FluentDispatchClusterHost](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Host/Hosting/FluentDispatchClusterHost.cs): Scaffolds the cluster by offering a convenient way to provide cluster options, logging options, monitoring and port binding. 
+- [FluentDispatchNodeHost](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Host/Hosting/FluentDispatchNodeHost.cs): Scaffolds the node by offering a convenient way to provide resolver types, logging options and port binding. 
 
-The logic is implemented through the NuGet package GrandCentralDispatch.Host.
+The logic is implemented through the NuGet package FluentDispatch.Host.
 
 ```
-Install-Package GrandCentralDispatch.Host
+Install-Package FluentDispatch.Host
 ```
 
-More details available [here](https://www.nuget.org/packages/GrandCentralDispatch.Host/).
+More details available [here](https://www.nuget.org/packages/FluentDispatch.Host/).
 
 ## Samples
 ### Local Processing
-The [sample](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Sample) is a .NET Core 3.0 console application which uses **GrandCentralDispatch** to:
+The [sample](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Sample) is a .NET Core 3.0 console application which uses **FluentDispatch** to:
 
 - Send 10 000 messages to the cluster.
 - Dispatch them to 10 local nodes.
 - The resolver processes each of the incoming messages to compute a Fibonacci number (1000) and await for 125ms delay (which simulates a short I/O).
 - Prints in the console the throughput of the cluster (msg/s) as well as the throughput of each individual nodes.
 
-![Sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/sample.png)
+![Sample](https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/sample.png)
 
-![Animated sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/animated-sample.gif)
+![Animated sample](https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/animated-sample.gif)
 
 This sample demonstrates the ability to offload a heavy process away from the main thread (the thread is still responsive while dispatching the messages) in a non-blocking and synchronous way (i.e fire and forget).
 
 ### Remote Processing
 The sample is decoupled in 3 parts:
 
-- [Node](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Host): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
-- [Cluster](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Cluster): .NET Core 3.0 Web Host which exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
-- [Contract](https://github.com/bbougot/GrandCentralDispatch/tree/master/GrandCentralDispatch.Contract): .NET Standard 2.1 assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
+- [Node](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Host): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
+- [Cluster](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Cluster): .NET Core 3.0 Web Host which exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
+- [Contract](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Contract): .NET Standard 2.1 assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
 
 The goal is to send POST requests to the cluster (http://localhost:5432/api/sentiment) containing a JSON body:
 
@@ -305,16 +305,16 @@ The cluster dispatches the content of this request to its healthiest remote node
 
 **Partial Resolvers**
 
--	[MetadataResolver](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
-- [SentimentPredictionResolver](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Contract/Resolvers/SentimentPredictionResolver.cs): Uses Tensorflow and processes a text analysis to extract the sentiment behind the ReviewText property. 
+-	[MetadataResolver](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
+- [SentimentPredictionResolver](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Contract/Resolvers/SentimentPredictionResolver.cs): Uses Tensorflow and processes a text analysis to extract the sentiment behind the ReviewText property. 
 
 **Final Resolver**
 
-- [IndexerResolver](https://github.com/bbougot/GrandCentralDispatch/blob/master/GrandCentralDispatch.Contract/Resolvers/IndexerResolver.cs): Waits for the 2 first resolvers to finish and indexes the result (title, movie overview and user-based movie sentiment: i.e liked or disliked) in ElasticSearch.
+- [IndexerResolver](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Contract/Resolvers/IndexerResolver.cs): Waits for the 2 first resolvers to finish and indexes the result (title, movie overview and user-based movie sentiment: i.e liked or disliked) in ElasticSearch.
 
 ElasticSearch is automatically deployed through Docker as well as the Node, Cluster, monitoring stack (InfluxDB, Grafana) and other ELK stack tools (Logstash and Kibana).
 
-After cloning this repository, you only need to execute this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/GrandCentralDispatch/blob/master/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
+After cloning this repository, you only need to execute this [script](https://github.com/bbougot/FluentDispatch/blob/master/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/FluentDispatch/blob/master/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
 
 The results of each request is then accessible through Kibana under the index `sentiment` (http://localhost:5601) and monitoring is available through Grafana (http://localhost:3000).
 
@@ -322,15 +322,15 @@ This sample demonstrates the ability to dispatch a workload to remote machines i
 
 **Processing**
 
-![Remote sample](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/remote-sample.gif)
+![Remote sample](https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/remote-sample.gif)
 
 **Monitoring**
 
-![Monitoring](https://raw.githubusercontent.com/bbougot/GrandCentralDispatch/master/Assets/monitoring.gif)
+![Monitoring](https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/monitoring.gif)
 
 ## Requirements
 
-**GrandCentralDispatch** framework requires .NET Standard 2.1 support, and is available for applications targeting .NET Core >= 3.0, thus supporting Windows/Linux/macOS environments.
+**FluentDispatch** framework requires .NET Standard 2.1 support, and is available for applications targeting .NET Core >= 3.0, thus supporting Windows/Linux/macOS environments.
 
 
 

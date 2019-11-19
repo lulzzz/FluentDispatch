@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.0.1" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />
+    <PackageReference Include="MagicOnion" Version="2.6.3" />
+    <PackageReference Include="MagicOnion.Hosting" Version="2.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\packages\grpc.core\2.23.0\runtimes\win\native\grpc_csharp_ext.x64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>grpc_csharp_ext.x64.dll</Link>
+    </Content>
+    <Content Include="..\packages\grpc.core\2.23.0\runtimes\linux\native\libgrpc_csharp_ext.x64.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>libgrpc_csharp_ext.x64.so</Link>
+    </Content>
+    <Content Include="..\packages\grpc.core\2.23.0\runtimes\osx\native\libgrpc_csharp_ext.x64.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>libgrpc_csharp_ext.x64.dylib</Link>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\FluentDispatch.Monitoring\FluentDispatch.Monitoring.csproj" />
+    <ProjectReference Include="..\FluentDispatch\FluentDispatch.csproj" />
+  </ItemGroup>
+</Project>

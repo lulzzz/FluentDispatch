@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  node:
+    container_name: fluentdispatchnode
+    environment:
+      FLUENTDISPATCH_NODE_LISTENING_PORT: 9090
+      ELASTICSEARCH_ENDPOINT: "http://192.168.2.10:9200"
+    build:
+      context: ../../../
+      dockerfile: Samples/Remote/FluentDispatch.Node/Dockerfile
+    image: fluentdispatch/node:v1
+    ports:
+      - "9090:9090"
+    networks:
+      - fluentdispatch-network
+networks:
+  fluentdispatch-network:
+    external: true

@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>FluentDispatch.Host</id>
+    <version>1.0.0</version>
+    <title>FluentDispatch.Host</title>
+    <authors>Benjamin Bougot</authors>
+    <owners>Benjamin Bougot</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectUrl>https://github.com/bbougot/FluentDispatch/</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/bbougot/FluentDispatch/master/Assets/logo.png</iconUrl>
+    <description>Provides hosting capabilities to FluentDispatch.</description>
+    <summary>Provides hosting capabilities to FluentDispatch.</summary>
+    <dependencies>
+      <group targetFramework=".NETCoreApp3.0">
+        <dependency id="FluentDispatch.Monitoring" version="1.0.0" exclude="Build,Analyzers" />
+        <dependency id="FluentDispatch" version="1.0.0" exclude="Build,Analyzers" />
+        <dependency id="MagicOnion" version="2.6.3" exclude="Build,Analyzers" />
+        <dependency id="MagicOnion.Hosting" version="2.6.3" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Hosting.WindowsServices" version="3.0.0" exclude="Build,Analyzers" />
+        <dependency id="Serilog.Extensions.Hosting" version="3.0.0" exclude="Build,Analyzers" />
+        <dependency id="Serilog.Sinks.Console" version="3.1.1" exclude="Build,Analyzers" />
+        <dependency id="Serilog.Sinks.File" version="4.1.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <frameworkReferences>
+      <group targetFramework=".NETCoreApp3.0">
+        <frameworkReference name="Microsoft.AspNetCore.App" />
+      </group>
+    </frameworkReferences>
+    <contentFiles>
+      <files include="any/netcoreapp3.0/grpc_csharp_ext.x64.dll" buildAction="Content" />
+      <files include="any/netcoreapp3.0/libgrpc_csharp_ext.x64.so" buildAction="Content" />
+      <files include="any/netcoreapp3.0/libgrpc_csharp_ext.x64.dylib" buildAction="Content" />
+    </contentFiles>
+  </metadata>
+  <files>
+    <file src="content\grpc_csharp_ext.x64.dll" target="content\grpc_csharp_ext.x64.dll" />
+    <file src="content\libgrpc_csharp_ext.x64.dylib" target="content\libgrpc_csharp_ext.x64.dylib" />
+    <file src="content\libgrpc_csharp_ext.x64.so" target="content\libgrpc_csharp_ext.x64.so" />
+    <file src="contentFiles\any\netcoreapp3.0\grpc_csharp_ext.x64.dll" target="contentFiles\any\netcoreapp3.0\grpc_csharp_ext.x64.dll" />
+    <file src="contentFiles\any\netcoreapp3.0\libgrpc_csharp_ext.x64.dylib" target="contentFiles\any\netcoreapp3.0\libgrpc_csharp_ext.x64.dylib" />
+    <file src="contentFiles\any\netcoreapp3.0\libgrpc_csharp_ext.x64.so" target="contentFiles\any\netcoreapp3.0\libgrpc_csharp_ext.x64.so" />
+    <file src="lib\netcoreapp3.0\FluentDispatch.Host.dll" target="lib\netcoreapp3.0\FluentDispatch.Host.dll" />
+  </files>
+</package>
