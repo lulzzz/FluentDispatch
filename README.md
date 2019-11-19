@@ -145,7 +145,7 @@ public class Startup : Host.ClusterStartup
 }
 ```
 
-FluentDispatch supports **dependency injection**, the cluster will be available through it accross the whole application and relies on a singleton lifetime. You can also declare it and use it manually as explained [here](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Sample/Program.cs).
+FluentDispatch supports **dependency injection**, the cluster will be available through it accross the whole application and relies on a singleton lifetime. You can also declare it and use it manually as explained [here](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Console/FluentDispatch.Sample/Program.cs).
 
 Once your cluster is defined, you can use it as follow:
 
@@ -215,7 +215,7 @@ Also, every node is independent from the others so that an opened circuit will n
 By default, a node is a local unit of work, which translates to a simple thread managed by the .NET Threadpool. 
 
 ### Remote
-FluentDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Node).
+FluentDispatch also provides the ability to dispatch work accross remote nodes, using **Remote Procedure Call**. By doing so, the cluster must be provided with **Hosts** option filled with IP address and port of the corresponding nodes. You will have to deploy a node on the specified machine, a sample is accessible [here](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Node).
 
 ## Resolver chaining
 While declaring a single resolver to the cluster is the simplest use case, you may need to compute several and independent tasks to your incoming workload, before having to deal with a final result. 
@@ -272,7 +272,7 @@ More details available [here](https://www.nuget.org/packages/FluentDispatch.Host
 
 ## Samples
 ### Local Processing
-The [sample](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Sample) is a .NET Core 3.0 console application which uses **FluentDispatch** to:
+The [sample](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Console/FluentDispatch.Sample) is a .NET Core 3.0 console application which uses **FluentDispatch** to:
 
 - Send 10 000 messages to the cluster.
 - Dispatch them to 10 local nodes.
@@ -288,9 +288,9 @@ This sample demonstrates the ability to offload a heavy process away from the ma
 ### Remote Processing
 The sample is decoupled in 3 parts:
 
-- [Node](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Host): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
-- [Cluster](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Cluster): .NET Core 3.0 Web Host which exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
-- [Contract](https://github.com/bbougot/FluentDispatch/tree/master/FluentDispatch.Contract): .NET Standard 2.1 assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
+- [Node](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Host): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
+- [Cluster](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Cluster): .NET Core 3.0 Web Host which exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
+- [Contract](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Contract): .NET Standard 2.1 assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
 
 The goal is to send POST requests to the cluster (http://localhost:5432/api/sentiment) containing a JSON body:
 
@@ -305,16 +305,16 @@ The cluster dispatches the content of this request to its healthiest remote node
 
 **Partial Resolvers**
 
--	[MetadataResolver](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
-- [SentimentPredictionResolver](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Contract/Resolvers/SentimentPredictionResolver.cs): Uses Tensorflow and processes a text analysis to extract the sentiment behind the ReviewText property. 
+-	[MetadataResolver](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/FluentDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
+- [SentimentPredictionResolver](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/FluentDispatch.Contract/Resolvers/SentimentPredictionResolver.cs): Uses Tensorflow and processes a text analysis to extract the sentiment behind the ReviewText property. 
 
 **Final Resolver**
 
-- [IndexerResolver](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Contract/Resolvers/IndexerResolver.cs): Waits for the 2 first resolvers to finish and indexes the result (title, movie overview and user-based movie sentiment: i.e liked or disliked) in ElasticSearch.
+- [IndexerResolver](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/FluentDispatch.Contract/Resolvers/IndexerResolver.cs): Waits for the 2 first resolvers to finish and indexes the result (title, movie overview and user-based movie sentiment: i.e liked or disliked) in ElasticSearch.
 
 ElasticSearch is automatically deployed through Docker as well as the Node, Cluster, monitoring stack (InfluxDB, Grafana) and other ELK stack tools (Logstash and Kibana).
 
-After cloning this repository, you only need to execute this [script](https://github.com/bbougot/FluentDispatch/blob/master/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/FluentDispatch/blob/master/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
+After cloning this repository, you only need to execute this [script](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/DockerSetup.cmd) in Windows or this [script](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/DockerSetup.sh) if running Unix/Linux/macOS environments. Make sure you're using the latest version of Docker/Docker Compose.
 
 The results of each request is then accessible through Kibana under the index `sentiment` (http://localhost:5601) and monitoring is available through Grafana (http://localhost:3000).
 
