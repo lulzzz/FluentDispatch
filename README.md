@@ -6,7 +6,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/FluentDispatch.svg)](https://www.nuget.org/packages/FluentDispatch/) [![NuGet](https://img.shields.io/nuget/dt/FluentDispatch.svg)](https://www.nuget.org/stats/packages/FluentDispatch?groupby=Version)
 <p align="left">
-  <a href="https://github.com/bbougot/FluentDispatch/actions"><img alt="GitHub Actions status" src="https://github.com/bbougot/FluentDispatch/workflows/.NET%20Core/badge.svg"></a>
+  <a href="https://github.com/bbougot/FluentDispatch/actions"><img alt="GitHub Actions status" src="https://github.com/bbougot/FluentDispatch/workflows/Build/badge.svg"></a>
 </p>
 
 # What is it?
