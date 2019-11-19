@@ -259,8 +259,8 @@ More details available [here](https://www.nuget.org/packages/FluentDispatch.Moni
 ## Hosting
 **FluentDispatch** facilitates its integration to an IHost instance by providing:
 
-- [FluentDispatchClusterHost](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Host/Hosting/FluentDispatchClusterHost.cs): Scaffolds the cluster by offering a convenient way to provide cluster options, logging options, monitoring and port binding. 
-- [FluentDispatchNodeHost](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Host/Hosting/FluentDispatchNodeHost.cs): Scaffolds the node by offering a convenient way to provide resolver types, logging options and port binding. 
+- [FluentDispatchCluster](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Host/Hosting/FluentDispatchCluster.cs): Scaffolds the cluster by offering a convenient way to provide cluster options, logging options, monitoring and port binding. 
+- [FluentDispatchNode](https://github.com/bbougot/FluentDispatch/blob/master/FluentDispatch.Host/Hosting/FluentDispatchNode.cs): Scaffolds the node by offering a convenient way to provide resolver types, logging options and port binding. 
 
 The logic is implemented through the NuGet package FluentDispatch.Host.
 
@@ -288,7 +288,7 @@ This sample demonstrates the ability to offload a heavy process away from the ma
 ### Remote Processing
 The sample is decoupled in 3 parts:
 
-- [Node](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Host): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
+- [Node](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Node): .NET Core 3.0 Web Host deployed on a machine and identified by an IP address and a port (http://localhost:9090) on which the cluster establishes a gRPC connection.
 - [Cluster](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Cluster): .NET Core 3.0 Web Host which exposes a RESTful endpoint (POST http://localhost:5432/api/sentiment).
 - [Contract](https://github.com/bbougot/FluentDispatch/tree/master/Samples/Remote/FluentDispatch.Contract): .NET Standard 2.1 assembly containing all the necessary resolvers used by the nodes to process the incoming requests.
 
@@ -305,7 +305,7 @@ The cluster dispatches the content of this request to its healthiest remote node
 
 **Partial Resolvers**
 
--	[MetadataResolver](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/FluentDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
+- [MetadataResolver](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/FluentDispatch.Contract/Resolvers/MetadataResolver.cs): Retrieve the movie overview from TMDb.
 - [SentimentPredictionResolver](https://github.com/bbougot/FluentDispatch/blob/master/Samples/Remote/FluentDispatch.Contract/Resolvers/SentimentPredictionResolver.cs): Uses Tensorflow and processes a text analysis to extract the sentiment behind the ReviewText property. 
 
 **Final Resolver**
